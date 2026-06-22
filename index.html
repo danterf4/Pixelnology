@@ -559,191 +559,67 @@
 
 <script>
 // ═══════════════════════════════════════════════════════
-// GAME DATABASE (150+ games)
+// STATE
 // ═══════════════════════════════════════════════════════
-const ALL_GAMES = [
-  // 1970s
-  {id:1,t:"Pong",p:"Arcade",y:1972},
-  {id:2,t:"Space Invaders",p:"Arcade",y:1978},
-  {id:3,t:"Asteroids",p:"Arcade",y:1979},
-  // 1980s
-  {id:4,t:"Pac-Man",p:"Arcade",y:1980},
-  {id:5,t:"Donkey Kong",p:"Arcade",y:1981},
-  {id:6,t:"Pitfall!",p:"Atari 2600",y:1982},
-  {id:7,t:"Dragon's Lair",p:"Arcade",y:1983},
-  {id:8,t:"Tetris",p:"PC",y:1984},
-  {id:9,t:"Super Mario Bros.",p:"NES",y:1985},
-  {id:10,t:"The Legend of Zelda",p:"NES",y:1986},
-  {id:11,t:"Metroid",p:"NES",y:1986},
-  {id:12,t:"Castlevania",p:"NES",y:1986},
-  {id:13,t:"Mega Man",p:"NES",y:1987},
-  {id:14,t:"Contra",p:"NES",y:1987},
-  {id:15,t:"Final Fantasy",p:"NES",y:1987},
-  {id:16,t:"Maniac Mansion",p:"PC",y:1987},
-  {id:17,t:"Mega Man 2",p:"NES",y:1988},
-  {id:18,t:"Bionic Commando",p:"NES",y:1988},
-  {id:19,t:"SimCity",p:"PC",y:1989},
-  {id:20,t:"Prince of Persia",p:"PC",y:1989},
-  {id:21,t:"Phantasy Star II",p:"Mega Drive",y:1989},
-  // 1990s
-  {id:22,t:"Super Mario World",p:"SNES",y:1990},
-  {id:23,t:"Final Fantasy IV",p:"SNES",y:1991},
-  {id:24,t:"Sonic the Hedgehog",p:"Mega Drive",y:1991},
-  {id:25,t:"Street Fighter II",p:"Arcade",y:1991},
-  {id:26,t:"The Secret of Monkey Island",p:"PC",y:1990},
-  {id:27,t:"Mortal Kombat",p:"Arcade",y:1992},
-  {id:28,t:"Wolfenstein 3D",p:"PC",y:1992},
-  {id:29,t:"Sonic the Hedgehog 2",p:"Mega Drive",y:1992},
-  {id:30,t:"Super Mario Kart",p:"SNES",y:1992},
-  {id:31,t:"Doom",p:"PC",y:1993},
-  {id:32,t:"Star Fox",p:"SNES",y:1993},
-  {id:33,t:"Secret of Mana",p:"SNES",y:1993},
-  {id:34,t:"Day of the Tentacle",p:"PC",y:1993},
-  {id:35,t:"Donkey Kong Country",p:"SNES",y:1994},
-  {id:36,t:"Earthbound",p:"SNES",y:1994},
-  {id:37,t:"System Shock",p:"PC",y:1994},
-  {id:38,t:"Warcraft: Orcs & Humans",p:"PC",y:1994},
-  {id:39,t:"Chrono Trigger",p:"SNES",y:1995},
-  {id:40,t:"Yoshi's Island",p:"SNES",y:1995},
-  {id:41,t:"Rayman",p:"PS1",y:1995},
-  {id:42,t:"Super Mario 64",p:"N64",y:1996},
-  {id:43,t:"Quake",p:"PC",y:1996},
-  {id:44,t:"Crash Bandicoot",p:"PS1",y:1996},
-  {id:45,t:"Diablo",p:"PC",y:1996},
-  {id:46,t:"NiGHTS into Dreams",p:"Saturn",y:1996},
-  {id:47,t:"Final Fantasy VII",p:"PS1",y:1997},
-  {id:48,t:"GoldenEye 007",p:"N64",y:1997},
-  {id:49,t:"Castlevania: Symphony of the Night",p:"PS1",y:1997},
-  {id:50,t:"Fallout",p:"PC",y:1997},
-  {id:51,t:"Star Wars: Jedi Knight",p:"PC",y:1997},
-  {id:52,t:"The Legend of Zelda: Ocarina of Time",p:"N64",y:1998},
-  {id:53,t:"Half-Life",p:"PC",y:1998},
-  {id:54,t:"Metal Gear Solid",p:"PS1",y:1998},
-  {id:55,t:"Banjo-Kazooie",p:"N64",y:1998},
-  {id:56,t:"StarCraft",p:"PC",y:1998},
-  {id:57,t:"Baldur's Gate",p:"PC",y:1998},
-  {id:58,t:"Thief: The Dark Project",p:"PC",y:1998},
-  {id:59,t:"Shenmue",p:"Dreamcast",y:1999},
-  {id:60,t:"Tony Hawk's Pro Skater",p:"PS1",y:1999},
-  {id:61,t:"Silent Hill",p:"PS1",y:1999},
-  {id:62,t:"Planescape: Torment",p:"PC",y:1999},
-  {id:63,t:"Quake III Arena",p:"PC",y:1999},
-  // 2000s
-  {id:64,t:"The Sims",p:"PC",y:2000},
-  {id:65,t:"Deus Ex",p:"PC",y:2000},
-  {id:66,t:"Majora's Mask",p:"N64",y:2000},
-  {id:67,t:"Diablo II",p:"PC",y:2000},
-  {id:68,t:"Halo: Combat Evolved",p:"Xbox",y:2001},
-  {id:69,t:"Grand Theft Auto III",p:"PS2",y:2001},
-  {id:70,t:"Max Payne",p:"PC",y:2001},
-  {id:71,t:"Black & White",p:"PC",y:2001},
-  {id:72,t:"Kingdom Hearts",p:"PS2",y:2002},
-  {id:73,t:"Warcraft III: Reign of Chaos",p:"PC",y:2002},
-  {id:74,t:"Metroid Prime",p:"GameCube",y:2002},
-  {id:75,t:"Morrowind",p:"PC/Xbox",y:2002},
-  {id:76,t:"Neverwinter Nights",p:"PC",y:2002},
-  {id:77,t:"Star Wars: KotOR",p:"Xbox/PC",y:2003},
-  {id:78,t:"Beyond Good & Evil",p:"PS2/Xbox",y:2003},
-  {id:79,t:"Prince of Persia: Sands of Time",p:"PS2",y:2003},
-  {id:80,t:"Splinter Cell",p:"Xbox/PC",y:2002},
-  {id:81,t:"World of Warcraft",p:"PC",y:2004},
-  {id:82,t:"Half-Life 2",p:"PC",y:2004},
-  {id:83,t:"Fable",p:"Xbox",y:2004},
-  {id:84,t:"Katamari Damacy",p:"PS2",y:2004},
-  {id:85,t:"God of War",p:"PS2",y:2005},
-  {id:86,t:"Shadow of the Colossus",p:"PS2",y:2005},
-  {id:87,t:"Resident Evil 4",p:"GameCube",y:2005},
-  {id:88,t:"Guitar Hero",p:"PS2",y:2005},
-  {id:89,t:"The Elder Scrolls IV: Oblivion",p:"PC/Xbox 360",y:2006},
-  {id:90,t:"Wii Sports",p:"Wii",y:2006},
-  {id:91,t:"Gears of War",p:"Xbox 360",y:2006},
-  {id:92,t:"Okami",p:"PS2",y:2006},
-  {id:93,t:"BioShock",p:"Xbox 360/PC",y:2007},
-  {id:94,t:"Mass Effect",p:"Xbox 360",y:2007},
-  {id:95,t:"Portal",p:"PC",y:2007},
-  {id:96,t:"Super Mario Galaxy",p:"Wii",y:2007},
-  {id:97,t:"Halo 3",p:"Xbox 360",y:2007},
-  {id:98,t:"Call of Duty 4: Modern Warfare",p:"Xbox 360/PS3",y:2007},
-  {id:99,t:"Grand Theft Auto IV",p:"PS3/Xbox 360",y:2008},
-  {id:100,t:"Left 4 Dead",p:"PC/Xbox 360",y:2008},
-  {id:101,t:"Dead Space",p:"PS3/Xbox 360",y:2008},
-  {id:102,t:"Fallout 3",p:"PC/PS3/Xbox 360",y:2008},
-  {id:103,t:"Batman: Arkham Asylum",p:"PS3/Xbox 360",y:2009},
-  {id:104,t:"Borderlands",p:"PS3/Xbox 360",y:2009},
-  {id:105,t:"Demon's Souls",p:"PS3",y:2009},
-  {id:106,t:"Dragon Age: Origins",p:"PC/PS3",y:2009},
-  // 2010s
-  {id:107,t:"Red Dead Redemption",p:"PS3/Xbox 360",y:2010},
-  {id:108,t:"Mass Effect 2",p:"PC/Xbox 360",y:2010},
-  {id:109,t:"StarCraft II",p:"PC",y:2010},
-  {id:110,t:"Minecraft",p:"PC",y:2011},
-  {id:111,t:"The Elder Scrolls V: Skyrim",p:"PC/PS3",y:2011},
-  {id:112,t:"Dark Souls",p:"PS3/Xbox 360",y:2011},
-  {id:113,t:"Portal 2",p:"PC/PS3",y:2011},
-  {id:114,t:"The Witcher 2",p:"PC",y:2011},
-  {id:115,t:"Journey",p:"PS3",y:2012},
-  {id:116,t:"Dishonored",p:"PC/PS3",y:2012},
-  {id:117,t:"XCOM: Enemy Unknown",p:"PC/PS3",y:2012},
-  {id:118,t:"Far Cry 3",p:"PC/PS3",y:2012},
-  {id:119,t:"The Last of Us",p:"PS3",y:2013},
-  {id:120,t:"Grand Theft Auto V",p:"PS3/Xbox 360",y:2013},
-  {id:121,t:"BioShock Infinite",p:"PC/PS3",y:2013},
-  {id:122,t:"Papers, Please",p:"PC",y:2013},
-  {id:123,t:"Dark Souls II",p:"PS3/Xbox 360",y:2014},
-  {id:124,t:"Shovel Knight",p:"PC/3DS",y:2014},
-  {id:125,t:"Dragon Age: Inquisition",p:"PC/PS4",y:2014},
-  {id:126,t:"Middle-earth: Shadow of Mordor",p:"PC/PS4",y:2014},
-  {id:127,t:"The Witcher 3",p:"PC/PS4",y:2015},
-  {id:128,t:"Bloodborne",p:"PS4",y:2015},
-  {id:129,t:"Undertale",p:"PC",y:2015},
-  {id:130,t:"Metal Gear Solid V",p:"PC/PS4",y:2015},
-  {id:131,t:"Fallout 4",p:"PC/PS4",y:2015},
-  {id:132,t:"Overwatch",p:"PC/PS4",y:2016},
-  {id:133,t:"Dark Souls III",p:"PC/PS4",y:2016},
-  {id:134,t:"Doom (2016)",p:"PC/PS4",y:2016},
-  {id:135,t:"Titanfall 2",p:"PC/PS4",y:2016},
-  {id:136,t:"The Legend of Zelda: Breath of the Wild",p:"Switch",y:2017},
-  {id:137,t:"Hollow Knight",p:"PC",y:2017},
-  {id:138,t:"Nier: Automata",p:"PC/PS4",y:2017},
-  {id:139,t:"Persona 5",p:"PS4",y:2017},
-  {id:140,t:"Cuphead",p:"PC/Xbox One",y:2017},
-  {id:141,t:"Super Mario Odyssey",p:"Switch",y:2017},
-  {id:142,t:"Red Dead Redemption 2",p:"PS4/Xbox One",y:2018},
-  {id:143,t:"God of War (2018)",p:"PS4",y:2018},
-  {id:144,t:"Return of the Obra Dinn",p:"PC",y:2018},
-  {id:145,t:"Celeste",p:"PC/Switch",y:2018},
-  {id:146,t:"Into the Breach",p:"PC",y:2018},
-  {id:147,t:"Sekiro: Shadows Die Twice",p:"PC/PS4",y:2019},
-  {id:148,t:"Death Stranding",p:"PS4",y:2019},
-  {id:149,t:"Disco Elysium",p:"PC",y:2019},
-  {id:150,t:"Outer Wilds",p:"PC/Xbox One",y:2019},
-  {id:151,t:"Control",p:"PC/PS4",y:2019},
-  // 2020s
-  {id:152,t:"Hades",p:"PC/Switch",y:2020},
-  {id:153,t:"Cyberpunk 2077",p:"PC/PS4",y:2020},
-  {id:154,t:"Ghost of Tsushima",p:"PS4",y:2020},
-  {id:155,t:"The Last of Us Part II",p:"PS4",y:2020},
-  {id:156,t:"Ori and the Will of the Wisps",p:"PC/Xbox",y:2020},
-  {id:157,t:"Returnal",p:"PS5",y:2021},
-  {id:158,t:"Deathloop",p:"PS5/PC",y:2021},
-  {id:159,t:"Metroid Dread",p:"Switch",y:2021},
-  {id:160,t:"It Takes Two",p:"PC/PS5",y:2021},
-  {id:161,t:"Elden Ring",p:"PC/PS5",y:2022},
-  {id:162,t:"God of War: Ragnarök",p:"PS5",y:2022},
-  {id:163,t:"Stray",p:"PC/PS5",y:2022},
-  {id:164,t:"Tunic",p:"PC/Xbox",y:2022},
-  {id:165,t:"Pentiment",p:"PC/Xbox",y:2022},
-  {id:166,t:"Hogwarts Legacy",p:"PC/PS5",y:2023},
-  {id:167,t:"Baldur's Gate 3",p:"PC/PS5",y:2023},
-  {id:168,t:"Alan Wake 2",p:"PC/PS5",y:2023},
-  {id:169,t:"Hi-Fi Rush",p:"PC/Xbox",y:2023},
-  {id:170,t:"Armored Core VI",p:"PC/PS5",y:2023},
-  {id:171,t:"Astro Bot",p:"PS5",y:2024},
-  {id:172,t:"Metaphor: ReFantazio",p:"PC/PS5",y:2024},
-  {id:173,t:"Balatro",p:"PC/Switch",y:2024},
-  {id:174,t:"Black Myth: Wukong",p:"PC/PS5",y:2024},
-  {id:175,t:"Elden Ring: Shadow of the Erdtree",p:"PC/PS5",y:2024},
-];
+const DAILY_COUNT = 10;
+let allGames = [];
+let anchorGame = null;
+let poolGames = [];
+let timeline = [];
+let checksUsed = 0;
+let gameWon = false;
+
+function getDailySeed() {
+  const d = new Date();
+  return (d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate()) * 7 + 13;
+}
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+async function init() {
+  const d = new Date();
+  document.getElementById('date-pill').textContent =
+    d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  document.getElementById('puzzle-pill').textContent = `Puzzle #${getDailySeed() % 1000}`;
+
+  document.getElementById('how-toggle').addEventListener('click', toggleHow);
+  document.getElementById('check-btn').addEventListener('click', checkTimeline);
+  document.getElementById('clear-btn').addEventListener('click', clearAll);
+
+  // Show loading state
+  document.getElementById('pool-grid').innerHTML =
+    `<div style="color:var(--text-muted);font-size:13px;padding:8px;">Loading today's games…</div>`;
+
+  try {
+    const res = await fetch(`${WORKER_URL}/games`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ seed: getDailySeed() })
+    });
+    const shuffled = await res.json();
+
+    // Pick 10 games spread across eras for variety
+    allGames = shuffled.slice(0, DAILY_COUNT).sort((a, b) => a.y - b.y);
+
+    // Pre-populate cover cache from IGDB data (already in response)
+    allGames.forEach(g => {
+      if (g.img) coverCache[g.id] = g.img;
+    });
+
+  } catch (err) {
+    console.error('Failed to load games:', err);
+    document.getElementById('pool-grid').innerHTML =
+      `<div style="color:var(--red);font-size:13px;padding:8px;">Failed to load games. Please refresh.</div>`;
+    return;
+  }
+
+  anchorGame = allGames[Math.floor(allGames.length / 2)];
+  poolGames = allGames.filter(g => g.id !== anchorGame.id);
+  timeline = [{ game: anchorGame, locked: true }];
+
+  render();
+}
 
 // ═══════════════════════════════════════════════════════
 // SEEDED RANDOM
@@ -771,21 +647,6 @@ function pickDailyGames(count = 10) {
   }
   return picked.sort((a, b) => a.y - b.y);
 }
-
-// ═══════════════════════════════════════════════════════
-// STATE
-// ═══════════════════════════════════════════════════════
-const DAILY_COUNT = 10;
-let allGames = pickDailyGames(DAILY_COUNT);
-let anchorGame = allGames[Math.floor(allGames.length / 2)];
-let poolGames = allGames.filter(g => g.id !== anchorGame.id);
-
-// timeline = array of {game, position} objects or null slots
-// We represent the timeline as an ordered array of placed items
-// Each entry: {game: {...}} | null (empty gap)
-let timeline = [{ game: anchorGame, locked: true }];
-let checksUsed = 0;
-let gameWon = false;
 
 // ═══════════════════════════════════════════════════════
 // INIT
