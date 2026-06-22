@@ -841,7 +841,7 @@ async function fetchCovers(games) {
   toFetch.forEach(g => { coverCache[g.id] = 'loading'; });
 
   try {
-    const res = await fetch(`https://autumn-wave-6693.max-andres-rf.workers.dev/covers`, {
+    const res = await fetch(`${WORKER_URL}/covers`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
