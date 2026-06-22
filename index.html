@@ -559,15 +559,21 @@
 
 <script>
 // ═══════════════════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════════════════
+const WORKER_URL = 'https://autumn-wave-6693.max-andres-rf.workers.dev';
+const DAILY_COUNT = 10;
+
+// ═══════════════════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════════════════
-const DAILY_COUNT = 10;
 let allGames = [];
 let anchorGame = null;
 let poolGames = [];
 let timeline = [];
 let checksUsed = 0;
 let gameWon = false;
+const coverCache = {};
 
 function getDailySeed() {
   const d = new Date();
@@ -587,7 +593,6 @@ async function init() {
   document.getElementById('check-btn').addEventListener('click', checkTimeline);
   document.getElementById('clear-btn').addEventListener('click', clearAll);
 
-  // Show loading state
   document.getElementById('pool-grid').innerHTML =
     `<div style="color:var(--text-muted);font-size:13px;padding:8px;">Loading today's games…</div>`;
 
@@ -598,15 +603,8 @@ async function init() {
       body: JSON.stringify({ seed: getDailySeed() })
     });
     const shuffled = await res.json();
-
-    // Pick 10 games spread across eras for variety
     allGames = shuffled.slice(0, DAILY_COUNT).sort((a, b) => a.y - b.y);
-
-    // Pre-populate cover cache from IGDB data (already in response)
-    allGames.forEach(g => {
-      if (g.img) coverCache[g.id] = g.img;
-    });
-
+    allGames.forEach(g => { if (g.img) coverCache[g.id] = g.img; });
   } catch (err) {
     console.error('Failed to load games:', err);
     document.getElementById('pool-grid').innerHTML =
@@ -617,49 +615,6 @@ async function init() {
   anchorGame = allGames[Math.floor(allGames.length / 2)];
   poolGames = allGames.filter(g => g.id !== anchorGame.id);
   timeline = [{ game: anchorGame, locked: true }];
-
-  render();
-}
-
-// ═══════════════════════════════════════════════════════
-// SEEDED RANDOM
-// ═══════════════════════════════════════════════════════
-function seededRand(seed) {
-  let s = seed >>> 0;
-  return () => {
-    s = Math.imul(1664525, s) + 1013904223 >>> 0;
-    return s / 4294967296;
-  };
-}
-
-function getDailySeed() {
-  const d = new Date();
-  return (d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate()) * 7 + 13;
-}
-
-function pickDailyGames(count = 10) {
-  const rand = seededRand(getDailySeed());
-  const pool = [...ALL_GAMES];
-  const picked = [];
-  while (picked.length < count) {
-    const idx = Math.floor(rand() * pool.length);
-    picked.push(pool.splice(idx, 1)[0]);
-  }
-  return picked.sort((a, b) => a.y - b.y);
-}
-
-// ═══════════════════════════════════════════════════════
-// INIT
-// ═══════════════════════════════════════════════════════
-function init() {
-  const d = new Date();
-  document.getElementById('date-pill').textContent =
-    d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  document.getElementById('puzzle-pill').textContent = `Puzzle #${getDailySeed() % 1000}`;
-
-  document.getElementById('how-toggle').addEventListener('click', toggleHow);
-  document.getElementById('check-btn').addEventListener('click', checkTimeline);
-  document.getElementById('clear-btn').addEventListener('click', clearAll);
 
   render();
 }
@@ -681,66 +636,16 @@ function render() {
   updateCheckBtn();
 }
 
-// ═══════════════════════════════════════════════════════
-// COVER ART via IGDB (proxied through Cloudflare Worker)
-// Deploy worker.js alongside this file — see README.
-// ═══════════════════════════════════════════════════════
-const IGDB_CLIENT_ID = 'jvtj8vvmpcqrclojx3kcphhdqj8kns';
-const IGDB_TOKEN     = '9jbw6392kbuuicavkgqq7embkxd8ia';
-
-// Point this to your deployed Cloudflare Worker URL.
-// e.g. 'https://pixeline-igdb.YOUR-NAME.workers.dev'
-// Until deployed, covers fall back to 🎮 icons gracefully.
-const WORKER_URL = 'https://autumn-wave-6693.max-andres-rf.workers.dev';
-
-const coverCache = {};
-
-async function fetchCovers(games) {
-  const toFetch = games.filter(g => coverCache[g.id] === undefined);
-  if (!toFetch.length) return;
-  toFetch.forEach(g => { coverCache[g.id] = 'loading'; });
-
-  try {
-    const res = await fetch(`${WORKER_URL}/covers`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        games: toFetch.map(g => ({ id: g.id, name: g.t, year: g.y }))
-      })
-    });
-    if (!res.ok) throw new Error(`Worker error ${res.status}`);
-    const map = await res.json(); // { gameId: "image_id", ... }
-
-    toFetch.forEach(g => {
-      const imageId = map[String(g.id)];
-      coverCache[g.id] = imageId
-        ? `https://images.igdb.com/igdb/image/upload/t_cover_big/${imageId}.jpg`
-        : 'none';
-      updateCardCovers(g.id);
-    });
-  } catch (err) {
-    console.warn('Cover fetch failed:', err.message);
-    toFetch.forEach(g => { coverCache[g.id] = 'none'; });
-  }
-}
-
-async function fetchCover(game) {
-  if (coverCache[game.id] !== undefined) return;
-  await fetchCovers([game]);
-}
 function updateCardCovers(gameId) {
-  // Update pool card
   const poolEl = document.querySelector(`.pool-card[data-id="${gameId}"] .pc-cover`);
   if (poolEl) injectCover(poolEl, gameId, 'pool');
-  // Update timeline card
   const tlEl = document.querySelector(`.tl-thumb[data-id="${gameId}"]`);
   if (tlEl) injectCover(tlEl, gameId, 'tl');
 }
 
 function injectCover(el, gameId, type) {
   const url = coverCache[gameId];
-  if (!url || url === 'loading') return;
-  if (url === 'none') return;
+  if (!url || url === 'loading' || url === 'none') return;
   el.innerHTML = `<img src="${url}" alt="" draggable="false" onerror="this.parentNode.innerHTML='<span class=\\'${type === 'pool' ? 'pc-cover-icon' : 'tl-thumb-icon'}\\'>🎮</span>'" />`;
 }
 
@@ -917,7 +822,6 @@ function clearAll() {
 function dropAt(insertIdx) {
   if (!dragState.game || gameWon) return;
   const g = dragState.game;
-  // Remove from timeline if already there
   const existingIdx = timeline.findIndex(t => t.game && t.game.id === g.id);
   let adjusted = insertIdx;
   if (existingIdx !== -1) {
@@ -925,7 +829,6 @@ function dropAt(insertIdx) {
     if (existingIdx < insertIdx) adjusted--;
   }
   timeline.splice(adjusted, 0, { game: g, locked: false });
-  // Clear previous check result for this game
   const entry = timeline.find(t => t.game.id === g.id);
   if (entry) delete entry.correct;
   dragState = {};
@@ -933,14 +836,13 @@ function dropAt(insertIdx) {
 }
 
 // ═══════════════════════════════════════════════════════
-// DRAG — DESKTOP (HTML5 DnD)
+// DRAG — DESKTOP
 // ═══════════════════════════════════════════════════════
 let dragState = {};
 
 function onDragStart(e, game, source, timelineIdx) {
   dragState = { game, source, timelineIdx };
   e.dataTransfer.effectAllowed = 'move';
-  // Mark dragged element visually after a tick
   const el = e.currentTarget;
   setTimeout(() => el.classList.add('dragging'), 0);
 }
@@ -950,7 +852,7 @@ function onDragEnd(e) {
 }
 
 // ═══════════════════════════════════════════════════════
-// DRAG — TOUCH (mobile)
+// DRAG — TOUCH
 // ═══════════════════════════════════════════════════════
 let touchState = {};
 
@@ -961,15 +863,13 @@ function onTouchStart(e, game, source, timelineIdx) {
   const el = e.currentTarget;
   dragState = { game, source, timelineIdx };
 
-  // Clone for visual ghost
   const rect = el.getBoundingClientRect();
   const ghost = el.cloneNode(true);
   ghost.id = 'touch-ghost';
   ghost.style.cssText = `
     position: fixed; z-index: 9999; pointer-events: none; opacity: 0.85;
     width: ${rect.width}px; left: ${rect.left}px; top: ${rect.top}px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-    transition: none;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5); transition: none;
   `;
   document.body.appendChild(ghost);
   el.classList.add('dragging');
@@ -985,8 +885,6 @@ function onTouchMove(e) {
   const { ghost, offsetX, offsetY, lastZone } = touchState;
   ghost.style.left = (touch.clientX - offsetX) + 'px';
   ghost.style.top = (touch.clientY - offsetY) + 'px';
-
-  // Find drop zone under finger
   ghost.style.display = 'none';
   const target = document.elementFromPoint(touch.clientX, touch.clientY);
   ghost.style.display = '';
@@ -1012,6 +910,9 @@ function onTouchEnd(e) {
   touchState = {};
 }
 
+// ═══════════════════════════════════════════════════════
+// STATS
+// ═══════════════════════════════════════════════════════
 function renderStats() {
   const placed = timeline.filter(t => !t.locked).length;
   const remaining = poolGames.length - placed;
@@ -1035,7 +936,6 @@ function checkTimeline() {
   if (gameWon) return;
   checksUsed++;
 
-  // Evaluate: a game is correct if its neighbors in the timeline have year <= game.year <= next.year
   let wrongCount = 0;
   timeline.forEach((entry, i) => {
     const prevYear = i > 0 ? timeline[i - 1].game.y : -Infinity;
@@ -1052,11 +952,10 @@ function checkTimeline() {
   } else {
     const total = poolGames.length;
     const right = total - wrongCount;
-    if (wrongCount === 1) {
-      setMsg(`<strong>1 game</strong> is in the wrong spot. Find it and move it!`, 'error');
-    } else {
-      setMsg(`<strong>${wrongCount} games</strong> are in the wrong spots (${right}/${total} correct). Keep adjusting!`, 'warning');
-    }
+    setMsg(wrongCount === 1
+      ? `<strong>1 game</strong> is in the wrong spot. Find it and move it!`
+      : `<strong>${wrongCount} games</strong> are in the wrong spots (${right}/${total} correct). Keep adjusting!`,
+      wrongCount === 1 ? 'error' : 'warning');
     render();
   }
 }
@@ -1073,7 +972,6 @@ function showEndScreen() {
   const msg = checksUsed === 1 ? 'Perfect! First try!' : checksUsed <= 2 ? 'Excellent!' : checksUsed <= 4 ? 'Well done!' : 'Completed!';
 
   const breakdown = allGames.map(g => {
-    const entry = timeline.find(t => t.game.id === g.id);
     const isAnchor = g.id === anchorGame.id;
     return `
       <div class="end-row">
@@ -1082,8 +980,7 @@ function showEndScreen() {
           <div class="er-year" style="color:var(--text-dim)">${g.y}</div>
           <div class="er-status">${isAnchor ? '<span style="color:var(--amber)">★</span>' : '<span style="color:var(--green)">✓</span>'}</div>
         </div>
-      </div>
-    `;
+      </div>`;
   }).join('');
 
   document.getElementById('end-screen').innerHTML = `
@@ -1097,15 +994,14 @@ function showEndScreen() {
         <button class="btn" onclick="window.location.reload()">Play again (new seed)</button>
       </div>
       <div class="copy-confirm" id="copy-confirm"></div>
-    </div>
-  `;
+    </div>`;
 }
 
 function copyShare() {
   const d = new Date();
   const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   const stars = checksUsed === 1 ? '★★★' : checksUsed === 2 ? '★★☆' : checksUsed <= 4 ? '★☆☆' : '☆☆☆';
-  const text = `Pixeline — ${dateStr}\n${stars}\n${checksUsed} check${checksUsed !== 1 ? 's' : ''} used\n\nCan you beat my score?`;
+  const text = `Pixelnology — ${dateStr}\n${stars}\n${checksUsed} check${checksUsed !== 1 ? 's' : ''} used\n\nCan you beat my score?`;
   navigator.clipboard.writeText(text).then(() => {
     const el = document.getElementById('copy-confirm');
     if (el) { el.textContent = 'Copied to clipboard!'; setTimeout(() => { el.textContent = ''; }, 2500); }
