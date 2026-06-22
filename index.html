@@ -662,7 +662,6 @@ function init() {
   document.getElementById('clear-btn').addEventListener('click', clearAll);
 
   render();
-  prefetchCovers(allGames);
 }
 
 function toggleHow() {
@@ -743,11 +742,6 @@ function injectCover(el, gameId, type) {
   if (!url || url === 'loading') return;
   if (url === 'none') return;
   el.innerHTML = `<img src="${url}" alt="" draggable="false" onerror="this.parentNode.innerHTML='<span class=\\'${type === 'pool' ? 'pc-cover-icon' : 'tl-thumb-icon'}\\'>🎮</span>'" />`;
-}
-
-function prefetchCovers(games) {
-  // Fetch all covers in one batched IGDB request
-  fetchCovers(games);
 }
 
 function renderPool() {
