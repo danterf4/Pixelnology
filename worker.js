@@ -83,7 +83,7 @@ export default {
           }
 
           if (best?.cover?.image_id) {
-            results[game.id] = best.cover.image_id;
+            results[String(game.id)] = best.cover.image_id;
           }
         } catch (e) {
           // skip failed individual lookups

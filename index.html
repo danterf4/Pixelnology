@@ -852,7 +852,7 @@ async function fetchCovers(games) {
     const map = await res.json(); // { gameId: "image_id", ... }
 
     toFetch.forEach(g => {
-      const imageId = map[g.id];
+      const imageId = map[String(g.id)];
       coverCache[g.id] = imageId
         ? `https://images.igdb.com/igdb/image/upload/t_cover_big/${imageId}.jpg`
         : 'none';
