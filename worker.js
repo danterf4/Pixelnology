@@ -52,7 +52,7 @@ export default {
           const body = `
             fields name, first_release_date, cover.image_id;
             search "${safeName}";
-            limit 5;
+            limit 10;
           `;
           const res = await fetch('https://api.igdb.com/v4/games', {
             method: 'POST',
@@ -66,18 +66,36 @@ export default {
 
           if (!res.ok) return;
           const matches = await res.json();
-
+          console.log(`[${game.name}]`, JSON.stringify(matches.map(m => ({ name: m.name, year: m.first_release_date ? new Date(m.first_release_date * 1000).getFullYear() : null, hascover: !!m.cover }))));
           // Pick the best match: prefer exact year match, fallback to closest
           let best = null;
-          let bestDiff = Infinity;
+          let bestScore = Infinity;
+
           for (const m of matches) {
             if (!m.cover?.image_id) continue;
+
+            const normalize = s => s.toLowerCase()
+              .normalize('NFD')
+              .replace(/[\u0300-\u036f]/g, '')
+              .replace(/[^a-z0-9\s]/g, '')
+              .trim();
+
+            const searchName = normalize(game.name);
+            const resultName = normalize(m.name || '');
+
+            // Levenshtein-lite: penalize name length difference
+            const nameDiff = Math.abs(searchName.length - resultName.length);
+
             const releaseYear = m.first_release_date
               ? new Date(m.first_release_date * 1000).getFullYear()
               : null;
-            const diff = releaseYear ? Math.abs(releaseYear - game.year) : 5;
-            if (diff < bestDiff) {
-              bestDiff = diff;
+            const yearDiff = releaseYear ? Math.abs(releaseYear - game.year) : 10;
+
+            // Combined score: year difference weighted more heavily
+            const score = yearDiff * 10 + nameDiff;
+
+            if (score < bestScore) {
+              bestScore = score;
               best = m;
             }
           }
