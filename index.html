@@ -835,210 +835,31 @@ const WORKER_URL = 'https://autumn-wave-6693.max-andres-rf.workers.dev';
 
 const coverCache = {};
 
-// IGDB game IDs — one per game in the database.
-const IGDB_IDS = {
-  1:7347,   // Pong
-  2:912,    // Space Invaders
-  3:823,    // Asteroids
-  4:68,     // Pac-Man
-  5:1716,   // Donkey Kong (arcade)
-  6:2253,   // Pitfall!
-  7:2561,   // Dragon's Lair
-  8:1716,   // Tetris
-  9:4057,   // Super Mario Bros.
-  10:4971,  // The Legend of Zelda
-  11:5413,  // Metroid
-  12:1073,  // Castlevania
-  13:4143,  // Mega Man
-  14:1726,  // Contra
-  15:1377,  // Final Fantasy
-  16:2966,  // Maniac Mansion
-  17:4145,  // Mega Man 2
-  18:4146,  // Bionic Commando
-  19:1729,  // SimCity (1989)
-  20:399,   // Prince of Persia (1989)
-  21:4977,  // Phantasy Star II
-  22:4971,  // Super Mario World
-  23:1378,  // Final Fantasy IV
-  24:409,   // Sonic the Hedgehog (1991)
-  25:1137,  // Street Fighter II
-  26:1300,  // Secret of Monkey Island
-  27:1264,  // Mortal Kombat
-  28:1375,  // Wolfenstein 3D
-  29:410,   // Sonic the Hedgehog 2
-  30:1079,  // Super Mario Kart
-  31:1777,  // Doom (1993)
-  32:5681,  // Star Fox
-  33:1127,  // Secret of Mana
-  34:1298,  // Day of the Tentacle
-  35:1081,  // Donkey Kong Country
-  36:1118,  // EarthBound
-  37:3537,  // System Shock
-  38:124,   // Warcraft: Orcs & Humans
-  39:1119,  // Chrono Trigger
-  40:1082,  // Yoshi's Island
-  41:483,   // Rayman
-  42:1771,  // Super Mario 64
-  43:4732,  // Quake
-  44:1092,  // Crash Bandicoot
-  45:1776,  // Diablo
-  46:3569,  // NiGHTS into Dreams
-  47:1066,  // Final Fantasy VII
-  48:1050,  // GoldenEye 007
-  49:1069,  // Castlevania: SotN
-  50:1775,  // Fallout
-  51:3586,  // Star Wars: Jedi Knight
-  52:1022,  // Ocarina of Time
-  53:1430,  // Half-Life
-  54:1065,  // Metal Gear Solid
-  55:1085,  // Banjo-Kazooie
-  56:123,   // StarCraft
-  57:1704,  // Baldur's Gate
-  58:3610,  // Thief: The Dark Project
-  59:3574,  // Shenmue
-  60:3568,  // Tony Hawk's Pro Skater
-  61:1379,  // Silent Hill
-  62:1705,  // Planescape: Torment
-  63:3392,  // Quake III Arena
-  64:1241,  // The Sims
-  65:1618,  // Deus Ex
-  66:1023,  // Majora's Mask
-  67:1775,  // Diablo II
-  68:1227,  // Halo: Combat Evolved
-  69:409,   // Grand Theft Auto III
-  70:3580,  // Max Payne
-  71:3578,  // Black & White
-  72:5687,  // Kingdom Hearts
-  73:124,   // Warcraft III
-  74:1110,  // Metroid Prime
-  75:1706,  // Morrowind
-  76:1704,  // Neverwinter Nights 2002
-  77:1708,  // KotOR
-  78:1619,  // Beyond Good & Evil
-  79:399,   // Prince of Persia: Sands of Time
-  80:3576,  // Splinter Cell
-  81:122,   // World of Warcraft
-  82:1430,  // Half-Life 2
-  83:3583,  // Fable (2004)
-  84:3572,  // Katamari Damacy
-  85:19,    // God of War (2005)
-  86:1073,  // Shadow of the Colossus
-  87:11,    // Resident Evil 4
-  88:3570,  // Guitar Hero
-  89:1706,  // Oblivion
-  90:3571,  // Wii Sports
-  91:1229,  // Gears of War
-  92:3564,  // Okami
-  93:58,    // BioShock
-  94:103,   // Mass Effect
-  95:730,   // Portal
-  96:1084,  // Super Mario Galaxy
-  97:1227,  // Halo 3
-  98:1064,  // Call of Duty 4
-  99:409,   // Grand Theft Auto IV
-  100:1430, // Left 4 Dead
-  101:3565, // Dead Space
-  102:1775, // Fallout 3
-  103:3,    // Batman: Arkham Asylum
-  104:121,  // Borderlands
-  105:1685, // Demon's Souls
-  106:1670, // Dragon Age: Origins
-  107:1234, // Red Dead Redemption
-  108:103,  // Mass Effect 2
-  109:123,  // StarCraft II
-  110:4252, // Minecraft
-  111:1706, // Skyrim
-  112:1685, // Dark Souls
-  113:730,  // Portal 2
-  114:1707, // Witcher 2
-  115:2394, // Journey
-  116:833,  // Dishonored
-  117:604,  // XCOM: Enemy Unknown
-  118:329,  // Far Cry 3
-  119:701,  // The Last of Us
-  120:409,  // GTA V
-  121:58,   // BioShock Infinite
-  122:3535, // Papers, Please
-  123:1685, // Dark Souls II
-  124:3536, // Shovel Knight
-  125:1670, // Dragon Age: Inquisition
-  126:3533, // Shadow of Mordor
-  127:1942, // The Witcher 3
-  128:1684, // Bloodborne
-  129:3536, // Undertale
-  130:1065, // Metal Gear Solid V
-  131:1775, // Fallout 4
-  132:1073, // Overwatch
-  133:1685, // Dark Souls III
-  134:1777, // Doom (2016)
-  135:1229, // Titanfall 2
-  136:1022, // Breath of the Wild
-  137:3536, // Hollow Knight
-  138:3536, // Nier: Automata
-  139:3567, // Persona 5
-  140:3536, // Cuphead
-  141:1084, // Super Mario Odyssey
-  142:1234, // Red Dead Redemption 2
-  143:19,   // God of War (2018)
-  144:3536, // Return of the Obra Dinn
-  145:3536, // Celeste
-  146:3536, // Into the Breach
-  147:1685, // Sekiro
-  148:1065, // Death Stranding
-  149:3536, // Disco Elysium
-  150:3536, // Outer Wilds
-  151:3536, // Control
-  152:3536, // Hades
-  153:3536, // Cyberpunk 2077
-  154:3536, // Ghost of Tsushima
-  155:701,  // The Last of Us Part II
-  156:3536, // Ori and the Will of the Wisps
-  157:3536, // Returnal
-  158:3536, // Deathloop
-  159:1110, // Metroid Dread
-  160:3536, // It Takes Two
-  161:119133,// Elden Ring
-  162:19,   // God of War: Ragnarök
-  163:3536, // Stray
-  164:3536, // Tunic
-  165:3536, // Pentiment
-  166:3536, // Hogwarts Legacy
-  167:1704, // Baldur's Gate 3
-  168:3536, // Alan Wake 2
-  169:3536, // Hi-Fi Rush
-  170:1685, // Armored Core VI
-  171:3536, // Astro Bot
-  172:3536, // Metaphor: ReFantazio
-  173:3536, // Balatro
-  174:3536, // Black Myth: Wukong
-  175:119133,// Elden Ring: Shadow of the Erdtree
-};
-
 async function fetchCovers(games) {
-  const toFetch = games.filter(g => coverCache[g.id] === undefined && IGDB_IDS[g.id]);
+  const toFetch = games.filter(g => coverCache[g.id] === undefined);
   if (!toFetch.length) return;
   toFetch.forEach(g => { coverCache[g.id] = 'loading'; });
 
-  const igdbGameIds = [...new Set(toFetch.map(g => IGDB_IDS[g.id]))];
-
   try {
-    const res = await fetch(`${WORKER_URL}/covers`, {
+    const res = await fetch(`https://pixelnology.max-andres-rf.workers.dev/covers`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ids: igdbGameIds })
+      body: JSON.stringify({
+        games: toFetch.map(g => ({ id: g.id, name: g.t, year: g.y }))
+      })
     });
     if (!res.ok) throw new Error(`Worker error ${res.status}`);
-    const map = await res.json(); // { "igdbGameId": "image_id", ... }
+    const map = await res.json(); // { gameId: "image_id", ... }
 
     toFetch.forEach(g => {
-      const imageId = map[IGDB_IDS[g.id]];
+      const imageId = map[g.id];
       coverCache[g.id] = imageId
         ? `https://images.igdb.com/igdb/image/upload/t_cover_big/${imageId}.jpg`
         : 'none';
       updateCardCovers(g.id);
     });
   } catch (err) {
-    console.warn('Cover fetch failed (is the Worker deployed?):', err.message);
+    console.warn('Cover fetch failed:', err.message);
     toFetch.forEach(g => { coverCache[g.id] = 'none'; });
   }
 }
