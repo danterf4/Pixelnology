@@ -30,7 +30,7 @@ export default {
 
     const url = new URL(request.url);
 
-    if (request.method === 'POST' && url.pathname === '/covers') {
+    if (request.method === 'POST' && url.pathname.includes('covers')) {
       let ids = [];
       try {
         const body = await request.json();
