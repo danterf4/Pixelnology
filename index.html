@@ -157,7 +157,7 @@
     user-select: none;
     position: relative;
     overflow: hidden;
-    width: 116px;
+    width: 105px;  /* was 116px */
     flex-shrink: 0;
   }
   .pool-card:active { cursor: grabbing; }
@@ -166,7 +166,7 @@
   .pool-card.dragging { opacity: 0.35; cursor: grabbing; }
   .pc-cover {
     width: 100%;
-    height: 76px;
+    height: 140px;  /* was 76px */
     background: var(--surface3);
     overflow: hidden;
     display: flex;
@@ -204,8 +204,8 @@
 
   /* Timeline thumbnail */
   .tl-thumb {
-    width: 36px;
-    height: 36px;
+    width: 40px;   /* was 36px */
+    height: 53px;  /* was 36px — matches 3:4 ratio */
     border-radius: 5px;
     overflow: hidden;
     flex-shrink: 0;
