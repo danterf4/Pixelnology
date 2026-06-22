@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pixeline — Daily Game Timeline</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f14;
+    --surface: #161921;
+    --surface2: #1e2230;
+    --surface3: #252b3b;
+    --border: rgba(255,255,255,0.07);
+    --border-md: rgba(255,255,255,0.13);
+    --border-hi: rgba(255,255,255,0.22);
+    --text: #e8eaf0;
+    --text-muted: #6b7280;
+    --text-dim: #9ca3af;
+    --accent: #7c6af7;
+    --accent-light: #a89eff;
+    --accent-bg: rgba(124,106,247,0.12);
+    --green: #22c77a;
+    --green-bg: rgba(34,199,122,0.1);
+    --red: #f0566b;
+    --red-bg: rgba(240,86,107,0.1);
+    --amber: #f5a623;
+    --amber-bg: rgba(245,166,35,0.1);
+    --mono: 'Space Mono', monospace;
+    --sans: 'Space Grotesk', sans-serif;
+    --radius: 10px;
+    --radius-lg: 14px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  /* ── LAYOUT ── */
+  .page { max-width: 860px; margin: 0 auto; padding: 0 1rem 4rem; }
+
+  /* ── HEADER ── */
+  .site-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.25rem 0 1rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 2rem;
+  }
+  .logo {
+    font-family: var(--mono);
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.5px;
+  }
+  .logo span { color: var(--accent-light); }
+  .header-meta { display: flex; gap: 8px; align-items: center; }
+  .pill {
+    font-size: 11px;
+    font-family: var(--mono);
+    padding: 3px 9px;
+    border-radius: 20px;
+    border: 1px solid var(--border-md);
+    color: var(--text-muted);
+    background: var(--surface);
+  }
+  .pill.accent { color: var(--accent-light); border-color: var(--accent); background: var(--accent-bg); }
+
+  /* ── HOW TO PLAY ── */
+  .how-bar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .how-bar:hover { border-color: var(--border-md); }
+  .how-bar .how-icon { font-size: 15px; }
+  .how-arrow { margin-left: auto; transition: transform 0.2s; }
+  .how-arrow.open { transform: rotate(180deg); }
+  .how-content {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-top: none;
+    border-radius: 0 0 var(--radius) var(--radius);
+    padding: 1rem 1.25rem;
+    margin-top: -12px;
+    margin-bottom: 1.5rem;
+    display: none;
+    font-size: 13px;
+    color: var(--text-dim);
+    line-height: 1.8;
+  }
+  .how-content.open { display: block; }
+  .how-content ol { padding-left: 1.2rem; }
+  .how-content li { margin-bottom: 4px; }
+  .how-content strong { color: var(--text); }
+
+  /* ── STATS ROW ── */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 1.75rem;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    text-align: center;
+  }
+  .stat-val { font-family: var(--mono); font-size: 22px; font-weight: 700; color: var(--text); }
+  .stat-lbl { font-size: 11px; color: var(--text-muted); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.6px; }
+
+  /* ── GAME POOL ── */
+  .section-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+    font-family: var(--mono);
+  }
+  .pool-area {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1rem;
+    margin-bottom: 1.75rem;
+  }
+  .pool-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .pool-card {
+    background: var(--surface2);
+    border: 1px solid var(--border-md);
+    border-radius: 8px;
+    padding: 8px 12px;
+    cursor: grab;
+    transition: border-color 0.12s, background 0.12s, transform 0.1s;
+    user-select: none;
+    position: relative;
+  }
+  .pool-card:active { cursor: grabbing; }
+  .pool-card:hover { border-color: var(--border-hi); background: var(--surface3); }
+  .pool-card.placed { opacity: 0.35; cursor: default; pointer-events: none; }
+  .pool-card.dragging { opacity: 0.35; cursor: grabbing; }
+  .pool-card.placed:hover { border-color: var(--border-md); background: var(--surface2); }
+  .pool-card .pc-title { font-size: 13px; font-weight: 500; color: var(--text); }
+  .pool-card .pc-platform { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+  .pool-card .pc-check {
+    position: absolute;
+    top: 4px; right: 5px;
+    font-size: 10px;
+    color: var(--green);
+    display: none;
+  }
+  .pool-card.placed .pc-check { display: block; }
+
+  /* ── TIMELINE ── */
+  .timeline-area {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1rem 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+  }
+  .timeline-track { position: relative; }
+  .tl-spine {
+    position: absolute;
+    left: 50px;
+    top: 0; bottom: 0;
+    width: 2px;
+    background: var(--surface3);
+    border-radius: 2px;
+  }
+  .tl-items { display: flex; flex-direction: column; gap: 0; position: relative; }
+
+  /* Slot between items */
+  .tl-gap {
+    display: flex;
+    align-items: center;
+    height: 28px;
+    position: relative;
+  }
+  .tl-gap-line {
+    position: absolute;
+    left: 50px;
+    width: 2px;
+    height: 100%;
+    background: var(--surface3);
+  }
+  .tl-drop-zone {
+    margin-left: 66px;
+    flex: 1;
+    height: 10px;
+    border-radius: 5px;
+    transition: height 0.12s, background 0.12s, border-color 0.12s;
+    border: 1.5px dashed transparent;
+    box-sizing: border-box;
+  }
+  .tl-drop-zone.drag-over {
+    height: 40px;
+    border-color: var(--accent);
+    background: var(--accent-bg);
+  }
+
+  /* Placed item row */
+  .tl-item {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    position: relative;
+  }
+  .tl-year-col {
+    width: 50px;
+    text-align: right;
+    padding-right: 12px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+    position: relative;
+    z-index: 2;
+  }
+  .tl-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--surface3);
+    border: 2px solid var(--border-md);
+    flex-shrink: 0;
+    position: relative;
+    z-index: 2;
+    margin-right: 8px;
+  }
+  .tl-dot.anchor { background: var(--accent); border-color: var(--accent-light); }
+  .tl-dot.correct { background: var(--green); border-color: var(--green); }
+  .tl-dot.wrong { background: var(--red); border-color: var(--red); }
+
+  .tl-card {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    min-width: 0;
+    transition: border-color 0.15s;
+    cursor: default;
+  }
+  .tl-card.removable { cursor: grab; }
+  .tl-card.removable:active { cursor: grabbing; }
+  .tl-card.removable:hover { border-color: var(--border-hi); }
+  .tl-card.dragging { opacity: 0.35; }
+  .tl-card.correct { border-color: var(--green); background: var(--green-bg); }
+  .tl-card.wrong { border-color: var(--red); background: var(--red-bg); }
+  .tl-card.anchor-card { border-color: var(--accent); background: var(--accent-bg); }
+  .tl-card-left { min-width: 0; }
+  .tl-card-title { font-size: 13px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tl-card-platform { font-size: 11px; color: var(--text-muted); }
+  .tl-card-right { flex-shrink: 0; display: flex; align-items: center; gap: 8px; }
+  .tl-card-year { font-family: var(--mono); font-size: 12px; }
+  .tl-card-year.hidden { visibility: hidden; }
+  .tl-card-year.green { color: var(--green); }
+  .tl-card-year.red { color: var(--red); }
+  .tl-card-year.amber { color: var(--amber); }
+  .remove-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 15px;
+    line-height: 1;
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: color 0.1s, background 0.1s;
+  }
+  .remove-btn:hover { color: var(--red); background: var(--red-bg); }
+  .tl-status-icon { font-size: 15px; }
+
+  /* ── EMPTY SLOT PLACEHOLDER ── */
+  .tl-empty {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    opacity: 0.4;
+  }
+
+  /* ── ACTIONS ── */
+  .actions-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 1.75rem;
+    flex-wrap: wrap;
+  }
+  .btn {
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 500;
+    padding: 10px 20px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border-md);
+    cursor: pointer;
+    transition: all 0.12s;
+    background: var(--surface2);
+    color: var(--text);
+  }
+  .btn:hover { background: var(--surface3); border-color: var(--border-hi); }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+  .btn-primary:hover { background: var(--accent-light); border-color: var(--accent-light); color: #0d0f14; }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+  .btn-sm { font-size: 12px; padding: 6px 14px; }
+  .btn-ghost { background: transparent; }
+
+  /* ── MESSAGE BOX ── */
+  .msg-box {
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    font-size: 13px;
+    margin-bottom: 1.25rem;
+    display: none;
+    line-height: 1.6;
+  }
+  .msg-box.show { display: block; }
+  .msg-box.success { background: var(--green-bg); border: 1px solid var(--green); color: var(--green); }
+  .msg-box.error { background: var(--red-bg); border: 1px solid var(--red); color: var(--red); }
+  .msg-box.info { background: var(--accent-bg); border: 1px solid var(--accent); color: var(--accent-light); }
+  .msg-box.warning { background: var(--amber-bg); border: 1px solid var(--amber); color: var(--amber); }
+  .msg-box strong { font-weight: 600; }
+
+  /* ── END SCREEN ── */
+  #end-screen { display: none; }
+  .end-card {
+    background: var(--surface);
+    border: 1px solid var(--border-md);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    text-align: center;
+  }
+  .end-emoji { font-size: 48px; margin-bottom: 12px; }
+  .end-score { font-family: var(--mono); font-size: 52px; font-weight: 700; color: var(--text); }
+  .end-score-sub { font-size: 14px; color: var(--text-muted); margin-bottom: 1.5rem; }
+  .end-breakdown {
+    background: var(--surface2);
+    border-radius: var(--radius);
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    text-align: left;
+  }
+  .end-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .end-row:last-child { border-bottom: none; }
+  .end-row .er-title { color: var(--text-dim); }
+  .end-row .er-year { font-family: var(--mono); font-size: 12px; }
+  .end-row .er-status { font-size: 13px; }
+  .share-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .copy-confirm { font-size: 12px; color: var(--green); margin-top: 8px; min-height: 18px; }
+
+  /* ── PROGRESS BAR ── */
+  .progress-bar-wrap {
+    background: var(--surface3);
+    border-radius: 20px;
+    height: 4px;
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 20px;
+    transition: width 0.3s ease;
+  }
+
+  /* ── DRAG FEEDBACK ── */
+  .dragging { opacity: 0.5; }
+  .drag-over .tl-insert-btn { border-color: var(--accent); color: var(--accent-light); background: var(--accent-bg); }
+
+  /* ── MOBILE ── */
+  @media (max-width: 560px) {
+    .stats-row { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .stat-val { font-size: 18px; }
+    .site-header { flex-wrap: wrap; gap: 8px; }
+    .actions-row { flex-direction: column; }
+    .btn { width: 100%; text-align: center; }
+    .end-card { padding: 1.25rem; }
+  }
+
+  /* ── SCANLINE OVERLAY ── */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent,
+      transparent 3px,
+      rgba(0,0,0,0.04) 3px,
+      rgba(0,0,0,0.04) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HEADER -->
+  <header class="site-header">
+    <div class="logo">PIXE<span>LINE</span></div>
+    <div class="header-meta">
+      <div class="pill accent" id="date-pill"></div>
+      <div class="pill" id="puzzle-pill"></div>
+    </div>
+  </header>
+
+  <!-- HOW TO PLAY -->
+  <div class="how-bar" id="how-toggle">
+    <span class="how-icon">🎮</span>
+    <span>How to play</span>
+    <span class="how-arrow" id="how-arrow">▾</span>
+  </div>
+  <div class="how-content" id="how-content">
+    <ol>
+      <li><strong>Drag a game</strong> from the pool and drop it into a slot on the timeline. On mobile, press and hold to drag.</li>
+      <li>One game is pre-placed as an anchor. Build the timeline around it in <strong>chronological order</strong> (oldest → newest, top to bottom).</li>
+      <li>Place <strong>all games</strong> before checking — you won't get feedback until every slot is filled.</li>
+      <li>Hit <strong>Check Timeline</strong>. You'll be told how many are wrong, but not which ones.</li>
+      <li>Drag games to new spots and check again until every game is in the right place.</li>
+      <li>Years are revealed only when <strong>every game is in the correct spot</strong>!</li>
+    </ol>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-val" id="stat-placed">0</div>
+      <div class="stat-lbl">Placed</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="stat-remaining">—</div>
+      <div class="stat-lbl">Remaining</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="stat-checks">0</div>
+      <div class="stat-lbl">Checks used</div>
+    </div>
+  </div>
+
+  <!-- MESSAGE -->
+  <div class="msg-box" id="msg-box"></div>
+
+  <!-- PROGRESS BAR -->
+  <div class="progress-bar-wrap">
+    <div class="progress-bar-fill" id="progress-fill" style="width:0%"></div>
+  </div>
+
+  <!-- GAME POOL -->
+  <div class="pool-area" id="pool-area">
+    <div class="section-label">Game pool — drag games onto the timeline</div>
+    <div class="pool-grid" id="pool-grid"></div>
+  </div>
+
+  <!-- TIMELINE -->
+  <div class="timeline-area">
+    <div class="section-label" style="margin-bottom:14px;">Timeline — oldest at top, newest at bottom</div>
+    <div class="timeline-track">
+      <div class="tl-spine" id="tl-spine"></div>
+      <div class="tl-items" id="tl-items"></div>
+    </div>
+  </div>
+
+  <!-- ACTIONS -->
+  <div class="actions-row">
+    <button class="btn btn-primary" id="check-btn" disabled>Check timeline</button>
+    <button class="btn btn-ghost btn-sm" id="clear-btn">Clear all</button>
+    <button class="btn btn-ghost btn-sm" id="how-btn" onclick="document.getElementById('how-toggle').click()">How to play</button>
+  </div>
+
+  <!-- END SCREEN -->
+  <div id="end-screen"></div>
+
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// GAME DATABASE (150+ games)
+// ═══════════════════════════════════════════════════════
+const ALL_GAMES = [
+  // 1970s
+  {id:1,t:"Pong",p:"Arcade",y:1972},
+  {id:2,t:"Space Invaders",p:"Arcade",y:1978},
+  {id:3,t:"Asteroids",p:"Arcade",y:1979},
+  // 1980s
+  {id:4,t:"Pac-Man",p:"Arcade",y:1980},
+  {id:5,t:"Donkey Kong",p:"Arcade",y:1981},
+  {id:6,t:"Pitfall!",p:"Atari 2600",y:1982},
+  {id:7,t:"Dragon's Lair",p:"Arcade",y:1983},
+  {id:8,t:"Tetris",p:"PC",y:1984},
+  {id:9,t:"Super Mario Bros.",p:"NES",y:1985},
+  {id:10,t:"The Legend of Zelda",p:"NES",y:1986},
+  {id:11,t:"Metroid",p:"NES",y:1986},
+  {id:12,t:"Castlevania",p:"NES",y:1986},
+  {id:13,t:"Mega Man",p:"NES",y:1987},
+  {id:14,t:"Contra",p:"NES",y:1987},
+  {id:15,t:"Final Fantasy",p:"NES",y:1987},
+  {id:16,t:"Maniac Mansion",p:"PC",y:1987},
+  {id:17,t:"Mega Man 2",p:"NES",y:1988},
+  {id:18,t:"Bionic Commando",p:"NES",y:1988},
+  {id:19,t:"SimCity",p:"PC",y:1989},
+  {id:20,t:"Prince of Persia",p:"PC",y:1989},
+  {id:21,t:"Phantasy Star II",p:"Mega Drive",y:1989},
+  // 1990s
+  {id:22,t:"Super Mario World",p:"SNES",y:1990},
+  {id:23,t:"Final Fantasy IV",p:"SNES",y:1991},
+  {id:24,t:"Sonic the Hedgehog",p:"Mega Drive",y:1991},
+  {id:25,t:"Street Fighter II",p:"Arcade",y:1991},
+  {id:26,t:"The Secret of Monkey Island",p:"PC",y:1990},
+  {id:27,t:"Mortal Kombat",p:"Arcade",y:1992},
+  {id:28,t:"Wolfenstein 3D",p:"PC",y:1992},
+  {id:29,t:"Sonic the Hedgehog 2",p:"Mega Drive",y:1992},
+  {id:30,t:"Super Mario Kart",p:"SNES",y:1992},
+  {id:31,t:"Doom",p:"PC",y:1993},
+  {id:32,t:"Star Fox",p:"SNES",y:1993},
+  {id:33,t:"Secret of Mana",p:"SNES",y:1993},
+  {id:34,t:"Day of the Tentacle",p:"PC",y:1993},
+  {id:35,t:"Donkey Kong Country",p:"SNES",y:1994},
+  {id:36,t:"Earthbound",p:"SNES",y:1994},
+  {id:37,t:"System Shock",p:"PC",y:1994},
+  {id:38,t:"Warcraft: Orcs & Humans",p:"PC",y:1994},
+  {id:39,t:"Chrono Trigger",p:"SNES",y:1995},
+  {id:40,t:"Yoshi's Island",p:"SNES",y:1995},
+  {id:41,t:"Rayman",p:"PS1",y:1995},
+  {id:42,t:"Super Mario 64",p:"N64",y:1996},
+  {id:43,t:"Quake",p:"PC",y:1996},
+  {id:44,t:"Crash Bandicoot",p:"PS1",y:1996},
+  {id:45,t:"Diablo",p:"PC",y:1996},
+  {id:46,t:"NiGHTS into Dreams",p:"Saturn",y:1996},
+  {id:47,t:"Final Fantasy VII",p:"PS1",y:1997},
+  {id:48,t:"GoldenEye 007",p:"N64",y:1997},
+  {id:49,t:"Castlevania: Symphony of the Night",p:"PS1",y:1997},
+  {id:50,t:"Fallout",p:"PC",y:1997},
+  {id:51,t:"Star Wars: Jedi Knight",p:"PC",y:1997},
+  {id:52,t:"The Legend of Zelda: Ocarina of Time",p:"N64",y:1998},
+  {id:53,t:"Half-Life",p:"PC",y:1998},
+  {id:54,t:"Metal Gear Solid",p:"PS1",y:1998},
+  {id:55,t:"Banjo-Kazooie",p:"N64",y:1998},
+  {id:56,t:"StarCraft",p:"PC",y:1998},
+  {id:57,t:"Baldur's Gate",p:"PC",y:1998},
+  {id:58,t:"Thief: The Dark Project",p:"PC",y:1998},
+  {id:59,t:"Shenmue",p:"Dreamcast",y:1999},
+  {id:60,t:"Tony Hawk's Pro Skater",p:"PS1",y:1999},
+  {id:61,t:"Silent Hill",p:"PS1",y:1999},
+  {id:62,t:"Planescape: Torment",p:"PC",y:1999},
+  {id:63,t:"Quake III Arena",p:"PC",y:1999},
+  // 2000s
+  {id:64,t:"The Sims",p:"PC",y:2000},
+  {id:65,t:"Deus Ex",p:"PC",y:2000},
+  {id:66,t:"Majora's Mask",p:"N64",y:2000},
+  {id:67,t:"Diablo II",p:"PC",y:2000},
+  {id:68,t:"Halo: Combat Evolved",p:"Xbox",y:2001},
+  {id:69,t:"Grand Theft Auto III",p:"PS2",y:2001},
+  {id:70,t:"Max Payne",p:"PC",y:2001},
+  {id:71,t:"Black & White",p:"PC",y:2001},
+  {id:72,t:"Kingdom Hearts",p:"PS2",y:2002},
+  {id:73,t:"Warcraft III: Reign of Chaos",p:"PC",y:2002},
+  {id:74,t:"Metroid Prime",p:"GameCube",y:2002},
+  {id:75,t:"Morrowind",p:"PC/Xbox",y:2002},
+  {id:76,t:"Neverwinter Nights",p:"PC",y:2002},
+  {id:77,t:"Star Wars: KotOR",p:"Xbox/PC",y:2003},
+  {id:78,t:"Beyond Good & Evil",p:"PS2/Xbox",y:2003},
+  {id:79,t:"Prince of Persia: Sands of Time",p:"PS2",y:2003},
+  {id:80,t:"Splinter Cell",p:"Xbox/PC",y:2002},
+  {id:81,t:"World of Warcraft",p:"PC",y:2004},
+  {id:82,t:"Half-Life 2",p:"PC",y:2004},
+  {id:83,t:"Fable",p:"Xbox",y:2004},
+  {id:84,t:"Katamari Damacy",p:"PS2",y:2004},
+  {id:85,t:"God of War",p:"PS2",y:2005},
+  {id:86,t:"Shadow of the Colossus",p:"PS2",y:2005},
+  {id:87,t:"Resident Evil 4",p:"GameCube",y:2005},
+  {id:88,t:"Guitar Hero",p:"PS2",y:2005},
+  {id:89,t:"The Elder Scrolls IV: Oblivion",p:"PC/Xbox 360",y:2006},
+  {id:90,t:"Wii Sports",p:"Wii",y:2006},
+  {id:91,t:"Gears of War",p:"Xbox 360",y:2006},
+  {id:92,t:"Okami",p:"PS2",y:2006},
+  {id:93,t:"BioShock",p:"Xbox 360/PC",y:2007},
+  {id:94,t:"Mass Effect",p:"Xbox 360",y:2007},
+  {id:95,t:"Portal",p:"PC",y:2007},
+  {id:96,t:"Super Mario Galaxy",p:"Wii",y:2007},
+  {id:97,t:"Halo 3",p:"Xbox 360",y:2007},
+  {id:98,t:"Call of Duty 4: Modern Warfare",p:"Xbox 360/PS3",y:2007},
+  {id:99,t:"Grand Theft Auto IV",p:"PS3/Xbox 360",y:2008},
+  {id:100,t:"Left 4 Dead",p:"PC/Xbox 360",y:2008},
+  {id:101,t:"Dead Space",p:"PS3/Xbox 360",y:2008},
+  {id:102,t:"Fallout 3",p:"PC/PS3/Xbox 360",y:2008},
+  {id:103,t:"Batman: Arkham Asylum",p:"PS3/Xbox 360",y:2009},
+  {id:104,t:"Borderlands",p:"PS3/Xbox 360",y:2009},
+  {id:105,t:"Demon's Souls",p:"PS3",y:2009},
+  {id:106,t:"Dragon Age: Origins",p:"PC/PS3",y:2009},
+  // 2010s
+  {id:107,t:"Red Dead Redemption",p:"PS3/Xbox 360",y:2010},
+  {id:108,t:"Mass Effect 2",p:"PC/Xbox 360",y:2010},
+  {id:109,t:"StarCraft II",p:"PC",y:2010},
+  {id:110,t:"Minecraft",p:"PC",y:2011},
+  {id:111,t:"The Elder Scrolls V: Skyrim",p:"PC/PS3",y:2011},
+  {id:112,t:"Dark Souls",p:"PS3/Xbox 360",y:2011},
+  {id:113,t:"Portal 2",p:"PC/PS3",y:2011},
+  {id:114,t:"The Witcher 2",p:"PC",y:2011},
+  {id:115,t:"Journey",p:"PS3",y:2012},
+  {id:116,t:"Dishonored",p:"PC/PS3",y:2012},
+  {id:117,t:"XCOM: Enemy Unknown",p:"PC/PS3",y:2012},
+  {id:118,t:"Far Cry 3",p:"PC/PS3",y:2012},
+  {id:119,t:"The Last of Us",p:"PS3",y:2013},
+  {id:120,t:"Grand Theft Auto V",p:"PS3/Xbox 360",y:2013},
+  {id:121,t:"BioShock Infinite",p:"PC/PS3",y:2013},
+  {id:122,t:"Papers, Please",p:"PC",y:2013},
+  {id:123,t:"Dark Souls II",p:"PS3/Xbox 360",y:2014},
+  {id:124,t:"Shovel Knight",p:"PC/3DS",y:2014},
+  {id:125,t:"Dragon Age: Inquisition",p:"PC/PS4",y:2014},
+  {id:126,t:"Middle-earth: Shadow of Mordor",p:"PC/PS4",y:2014},
+  {id:127,t:"The Witcher 3",p:"PC/PS4",y:2015},
+  {id:128,t:"Bloodborne",p:"PS4",y:2015},
+  {id:129,t:"Undertale",p:"PC",y:2015},
+  {id:130,t:"Metal Gear Solid V",p:"PC/PS4",y:2015},
+  {id:131,t:"Fallout 4",p:"PC/PS4",y:2015},
+  {id:132,t:"Overwatch",p:"PC/PS4",y:2016},
+  {id:133,t:"Dark Souls III",p:"PC/PS4",y:2016},
+  {id:134,t:"Doom (2016)",p:"PC/PS4",y:2016},
+  {id:135,t:"Titanfall 2",p:"PC/PS4",y:2016},
+  {id:136,t:"The Legend of Zelda: Breath of the Wild",p:"Switch",y:2017},
+  {id:137,t:"Hollow Knight",p:"PC",y:2017},
+  {id:138,t:"Nier: Automata",p:"PC/PS4",y:2017},
+  {id:139,t:"Persona 5",p:"PS4",y:2017},
+  {id:140,t:"Cuphead",p:"PC/Xbox One",y:2017},
+  {id:141,t:"Super Mario Odyssey",p:"Switch",y:2017},
+  {id:142,t:"Red Dead Redemption 2",p:"PS4/Xbox One",y:2018},
+  {id:143,t:"God of War (2018)",p:"PS4",y:2018},
+  {id:144,t:"Return of the Obra Dinn",p:"PC",y:2018},
+  {id:145,t:"Celeste",p:"PC/Switch",y:2018},
+  {id:146,t:"Into the Breach",p:"PC",y:2018},
+  {id:147,t:"Sekiro: Shadows Die Twice",p:"PC/PS4",y:2019},
+  {id:148,t:"Death Stranding",p:"PS4",y:2019},
+  {id:149,t:"Disco Elysium",p:"PC",y:2019},
+  {id:150,t:"Outer Wilds",p:"PC/Xbox One",y:2019},
+  {id:151,t:"Control",p:"PC/PS4",y:2019},
+  // 2020s
+  {id:152,t:"Hades",p:"PC/Switch",y:2020},
+  {id:153,t:"Cyberpunk 2077",p:"PC/PS4",y:2020},
+  {id:154,t:"Ghost of Tsushima",p:"PS4",y:2020},
+  {id:155,t:"The Last of Us Part II",p:"PS4",y:2020},
+  {id:156,t:"Ori and the Will of the Wisps",p:"PC/Xbox",y:2020},
+  {id:157,t:"Returnal",p:"PS5",y:2021},
+  {id:158,t:"Deathloop",p:"PS5/PC",y:2021},
+  {id:159,t:"Metroid Dread",p:"Switch",y:2021},
+  {id:160,t:"It Takes Two",p:"PC/PS5",y:2021},
+  {id:161,t:"Elden Ring",p:"PC/PS5",y:2022},
+  {id:162,t:"God of War: Ragnarök",p:"PS5",y:2022},
+  {id:163,t:"Stray",p:"PC/PS5",y:2022},
+  {id:164,t:"Tunic",p:"PC/Xbox",y:2022},
+  {id:165,t:"Pentiment",p:"PC/Xbox",y:2022},
+  {id:166,t:"Hogwarts Legacy",p:"PC/PS5",y:2023},
+  {id:167,t:"Baldur's Gate 3",p:"PC/PS5",y:2023},
+  {id:168,t:"Alan Wake 2",p:"PC/PS5",y:2023},
+  {id:169,t:"Hi-Fi Rush",p:"PC/Xbox",y:2023},
+  {id:170,t:"Armored Core VI",p:"PC/PS5",y:2023},
+  {id:171,t:"Astro Bot",p:"PS5",y:2024},
+  {id:172,t:"Metaphor: ReFantazio",p:"PC/PS5",y:2024},
+  {id:173,t:"Balatro",p:"PC/Switch",y:2024},
+  {id:174,t:"Black Myth: Wukong",p:"PC/PS5",y:2024},
+  {id:175,t:"Elden Ring: Shadow of the Erdtree",p:"PC/PS5",y:2024},
+];
+
+// ═══════════════════════════════════════════════════════
+// SEEDED RANDOM
+// ═══════════════════════════════════════════════════════
+function seededRand(seed) {
+  let s = seed >>> 0;
+  return () => {
+    s = Math.imul(1664525, s) + 1013904223 >>> 0;
+    return s / 4294967296;
+  };
+}
+
+function getDailySeed() {
+  const d = new Date();
+  return (d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate()) * 7 + 13;
+}
+
+function pickDailyGames(count = 10) {
+  const rand = seededRand(getDailySeed());
+  const pool = [...ALL_GAMES];
+  const picked = [];
+  while (picked.length < count) {
+    const idx = Math.floor(rand() * pool.length);
+    picked.push(pool.splice(idx, 1)[0]);
+  }
+  return picked.sort((a, b) => a.y - b.y);
+}
+
+// ═══════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════
+const DAILY_COUNT = 10;
+let allGames = pickDailyGames(DAILY_COUNT);
+let anchorGame = allGames[Math.floor(allGames.length / 2)];
+let poolGames = allGames.filter(g => g.id !== anchorGame.id);
+
+// timeline = array of {game, position} objects or null slots
+// We represent the timeline as an ordered array of placed items
+// Each entry: {game: {...}} | null (empty gap)
+let timeline = [{ game: anchorGame, locked: true }];
+let checksUsed = 0;
+let gameWon = false;
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+function init() {
+  const d = new Date();
+  document.getElementById('date-pill').textContent =
+    d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  document.getElementById('puzzle-pill').textContent = `Puzzle #${getDailySeed() % 1000}`;
+
+  document.getElementById('how-toggle').addEventListener('click', toggleHow);
+  document.getElementById('check-btn').addEventListener('click', checkTimeline);
+  document.getElementById('clear-btn').addEventListener('click', clearAll);
+
+  render();
+}
+
+function toggleHow() {
+  const c = document.getElementById('how-content');
+  const a = document.getElementById('how-arrow');
+  c.classList.toggle('open');
+  a.classList.toggle('open');
+}
+
+// ═══════════════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════════════
+function render() {
+  renderPool();
+  renderTimeline();
+  renderStats();
+  updateCheckBtn();
+}
+
+function renderPool() {
+  const grid = document.getElementById('pool-grid');
+  grid.innerHTML = '';
+  poolGames.forEach(g => {
+    const placed = timeline.some(t => t.game && t.game.id === g.id);
+    const div = document.createElement('div');
+    div.className = 'pool-card' + (placed ? ' placed' : '');
+    div.innerHTML = `<div class="pc-check">✓</div><div class="pc-title">${g.t}</div>`;
+    if (!placed) {
+      div.draggable = true;
+      div.addEventListener('dragstart', e => onDragStart(e, g, 'pool', null));
+      div.addEventListener('dragend', onDragEnd);
+      // Touch support
+      div.addEventListener('touchstart', e => onTouchStart(e, g, 'pool', null), { passive: false });
+    }
+    grid.appendChild(div);
+  });
+}
+
+function renderTimeline() {
+  const container = document.getElementById('tl-items');
+  container.innerHTML = '';
+  container.appendChild(makeGap(0));
+  timeline.forEach((entry, i) => {
+    container.appendChild(makeItemRow(entry, i));
+    container.appendChild(makeGap(i + 1));
+  });
+}
+
+function makeGap(insertIdx) {
+  const div = document.createElement('div');
+  div.className = 'tl-gap';
+  const line = document.createElement('div');
+  line.className = 'tl-gap-line';
+  div.appendChild(line);
+  const zone = document.createElement('div');
+  zone.className = 'tl-drop-zone';
+  zone.dataset.insertIdx = insertIdx;
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+  zone.addEventListener('drop', e => { e.preventDefault(); zone.classList.remove('drag-over'); dropAt(insertIdx); });
+  div.appendChild(zone);
+  return div;
+}
+
+function makeItemRow(entry, idx) {
+  const row = document.createElement('div');
+  row.className = 'tl-item';
+
+  const yearCol = document.createElement('div');
+  yearCol.className = 'tl-year-col';
+  if (gameWon) {
+    yearCol.textContent = entry.game.y;
+    yearCol.style.color = entry.correct === false ? 'var(--red)' : 'var(--text-muted)';
+  }
+  row.appendChild(yearCol);
+
+  const dot = document.createElement('div');
+  dot.className = 'tl-dot' +
+    (entry.locked ? ' anchor' : '') +
+    (gameWon && entry.correct === true ? ' correct' : '') +
+    (gameWon && entry.correct === false ? ' wrong' : '');
+  row.appendChild(dot);
+
+  const card = document.createElement('div');
+  card.className = 'tl-card' +
+    (entry.locked ? ' anchor-card' : '') +
+    (!entry.locked && !gameWon ? ' removable' : '') +
+    (gameWon && entry.correct === true ? ' correct' : '') +
+    (gameWon && entry.correct === false ? ' wrong' : '');
+
+  const left = document.createElement('div');
+  left.className = 'tl-card-left';
+  left.innerHTML = `<div class="tl-card-title">${entry.game.t}</div>`;
+
+  const right = document.createElement('div');
+  right.className = 'tl-card-right';
+
+  if (entry.locked) {
+    const yr = document.createElement('div');
+    yr.className = 'tl-card-year amber';
+    yr.textContent = entry.game.y + ' ★';
+    right.appendChild(yr);
+  } else if (gameWon) {
+    const yr = document.createElement('div');
+    yr.className = 'tl-card-year ' + (entry.correct ? 'green' : 'red');
+    yr.textContent = entry.game.y;
+    right.appendChild(yr);
+    const icon = document.createElement('span');
+    icon.className = 'tl-status-icon';
+    icon.textContent = entry.correct ? '✓' : '✗';
+    icon.style.color = entry.correct ? 'var(--green)' : 'var(--red)';
+    right.appendChild(icon);
+  } else {
+    if (!entry.locked) {
+      const rmBtn = document.createElement('button');
+      rmBtn.className = 'remove-btn';
+      rmBtn.textContent = '×';
+      rmBtn.title = 'Remove from timeline';
+      rmBtn.addEventListener('click', (e) => { e.stopPropagation(); removeGame(idx); });
+      right.appendChild(rmBtn);
+    }
+  }
+
+  card.appendChild(left);
+  card.appendChild(right);
+  row.appendChild(card);
+
+  if (!entry.locked && !gameWon) {
+    card.draggable = true;
+    card.addEventListener('dragstart', e => onDragStart(e, entry.game, 'timeline', idx));
+    card.addEventListener('dragend', onDragEnd);
+    card.addEventListener('touchstart', e => onTouchStart(e, entry.game, 'timeline', idx), { passive: false });
+  }
+
+  return row;
+}
+
+// ═══════════════════════════════════════════════════════
+// ACTIONS
+// ═══════════════════════════════════════════════════════
+function removeGame(idx) {
+  if (timeline[idx].locked) return;
+  timeline.splice(idx, 1);
+  render();
+}
+
+function clearAll() {
+  if (gameWon) return;
+  timeline = [{ game: anchorGame, locked: true }];
+  render();
+}
+
+function dropAt(insertIdx) {
+  if (!dragState.game || gameWon) return;
+  const g = dragState.game;
+  // Remove from timeline if already there
+  const existingIdx = timeline.findIndex(t => t.game && t.game.id === g.id);
+  let adjusted = insertIdx;
+  if (existingIdx !== -1) {
+    timeline.splice(existingIdx, 1);
+    if (existingIdx < insertIdx) adjusted--;
+  }
+  timeline.splice(adjusted, 0, { game: g, locked: false });
+  // Clear previous check result for this game
+  const entry = timeline.find(t => t.game.id === g.id);
+  if (entry) delete entry.correct;
+  dragState = {};
+  render();
+}
+
+// ═══════════════════════════════════════════════════════
+// DRAG — DESKTOP (HTML5 DnD)
+// ═══════════════════════════════════════════════════════
+let dragState = {};
+
+function onDragStart(e, game, source, timelineIdx) {
+  dragState = { game, source, timelineIdx };
+  e.dataTransfer.effectAllowed = 'move';
+  // Mark dragged element visually after a tick
+  const el = e.currentTarget;
+  setTimeout(() => el.classList.add('dragging'), 0);
+}
+
+function onDragEnd(e) {
+  e.currentTarget.classList.remove('dragging');
+}
+
+// ═══════════════════════════════════════════════════════
+// DRAG — TOUCH (mobile)
+// ═══════════════════════════════════════════════════════
+let touchState = {};
+
+function onTouchStart(e, game, source, timelineIdx) {
+  if (gameWon) return;
+  e.preventDefault();
+  const touch = e.touches[0];
+  const el = e.currentTarget;
+  dragState = { game, source, timelineIdx };
+
+  // Clone for visual ghost
+  const rect = el.getBoundingClientRect();
+  const ghost = el.cloneNode(true);
+  ghost.id = 'touch-ghost';
+  ghost.style.cssText = `
+    position: fixed; z-index: 9999; pointer-events: none; opacity: 0.85;
+    width: ${rect.width}px; left: ${rect.left}px; top: ${rect.top}px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    transition: none;
+  `;
+  document.body.appendChild(ghost);
+  el.classList.add('dragging');
+  touchState = { el, ghost, offsetX: touch.clientX - rect.left, offsetY: touch.clientY - rect.top, lastZone: null };
+
+  document.addEventListener('touchmove', onTouchMove, { passive: false });
+  document.addEventListener('touchend', onTouchEnd);
+}
+
+function onTouchMove(e) {
+  e.preventDefault();
+  const touch = e.touches[0];
+  const { ghost, offsetX, offsetY, lastZone } = touchState;
+  ghost.style.left = (touch.clientX - offsetX) + 'px';
+  ghost.style.top = (touch.clientY - offsetY) + 'px';
+
+  // Find drop zone under finger
+  ghost.style.display = 'none';
+  const target = document.elementFromPoint(touch.clientX, touch.clientY);
+  ghost.style.display = '';
+  const zone = target && target.closest('.tl-drop-zone');
+  if (zone !== lastZone) {
+    if (lastZone) lastZone.classList.remove('drag-over');
+    if (zone) zone.classList.add('drag-over');
+    touchState.lastZone = zone;
+  }
+}
+
+function onTouchEnd(e) {
+  document.removeEventListener('touchmove', onTouchMove);
+  document.removeEventListener('touchend', onTouchEnd);
+  const { el, ghost, lastZone } = touchState;
+  if (ghost) ghost.remove();
+  if (el) el.classList.remove('dragging');
+  if (lastZone) {
+    lastZone.classList.remove('drag-over');
+    const idx = parseInt(lastZone.dataset.insertIdx, 10);
+    if (!isNaN(idx)) dropAt(idx);
+  }
+  touchState = {};
+}
+
+function renderStats() {
+  const placed = timeline.filter(t => !t.locked).length;
+  const remaining = poolGames.length - placed;
+  document.getElementById('stat-placed').textContent = placed;
+  document.getElementById('stat-remaining').textContent = remaining;
+  document.getElementById('stat-checks').textContent = checksUsed;
+  const pct = (placed / poolGames.length) * 100;
+  document.getElementById('progress-fill').style.width = pct + '%';
+}
+
+function updateCheckBtn() {
+  const placed = timeline.filter(t => !t.locked).length;
+  const btn = document.getElementById('check-btn');
+  btn.disabled = placed < poolGames.length || gameWon;
+}
+
+// ═══════════════════════════════════════════════════════
+// CHECK
+// ═══════════════════════════════════════════════════════
+function checkTimeline() {
+  if (gameWon) return;
+  checksUsed++;
+
+  // Evaluate: a game is correct if its neighbors in the timeline have year <= game.year <= next.year
+  let wrongCount = 0;
+  timeline.forEach((entry, i) => {
+    const prevYear = i > 0 ? timeline[i - 1].game.y : -Infinity;
+    const nextYear = i < timeline.length - 1 ? timeline[i + 1].game.y : Infinity;
+    entry.correct = entry.game.y >= prevYear && entry.game.y <= nextYear;
+    if (!entry.locked && !entry.correct) wrongCount++;
+  });
+
+  if (wrongCount === 0) {
+    gameWon = true;
+    render();
+    setTimeout(showEndScreen, 600);
+    setMsg('', '');
+  } else {
+    const total = poolGames.length;
+    const right = total - wrongCount;
+    if (wrongCount === 1) {
+      setMsg(`<strong>1 game</strong> is in the wrong spot. Find it and move it!`, 'error');
+    } else {
+      setMsg(`<strong>${wrongCount} games</strong> are in the wrong spots (${right}/${total} correct). Keep adjusting!`, 'warning');
+    }
+    render();
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// END SCREEN
+// ═══════════════════════════════════════════════════════
+function showEndScreen() {
+  document.getElementById('end-screen').style.display = 'block';
+  document.getElementById('end-screen').scrollIntoView({ behavior: 'smooth' });
+
+  const stars = checksUsed === 1 ? '★★★' : checksUsed === 2 ? '★★☆' : checksUsed <= 4 ? '★☆☆' : '☆☆☆';
+  const emoji = checksUsed === 1 ? '🏆' : checksUsed <= 3 ? '🎮' : '🕹️';
+  const msg = checksUsed === 1 ? 'Perfect! First try!' : checksUsed <= 2 ? 'Excellent!' : checksUsed <= 4 ? 'Well done!' : 'Completed!';
+
+  const breakdown = allGames.map(g => {
+    const entry = timeline.find(t => t.game.id === g.id);
+    const isAnchor = g.id === anchorGame.id;
+    return `
+      <div class="end-row">
+        <div class="er-title">${g.t}</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="er-year" style="color:var(--text-dim)">${g.y}</div>
+          <div class="er-status">${isAnchor ? '<span style="color:var(--amber)">★</span>' : '<span style="color:var(--green)">✓</span>'}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  document.getElementById('end-screen').innerHTML = `
+    <div class="end-card">
+      <div class="end-emoji">${emoji}</div>
+      <div class="end-score">${stars}</div>
+      <div class="end-score-sub">${msg} &nbsp;·&nbsp; ${checksUsed} check${checksUsed !== 1 ? 's' : ''} used</div>
+      <div class="end-breakdown">${breakdown}</div>
+      <div class="share-row">
+        <button class="btn btn-primary" onclick="copyShare()">Share result</button>
+        <button class="btn" onclick="window.location.reload()">Play again (new seed)</button>
+      </div>
+      <div class="copy-confirm" id="copy-confirm"></div>
+    </div>
+  `;
+}
+
+function copyShare() {
+  const d = new Date();
+  const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  const stars = checksUsed === 1 ? '★★★' : checksUsed === 2 ? '★★☆' : checksUsed <= 4 ? '★☆☆' : '☆☆☆';
+  const text = `Pixeline — ${dateStr}\n${stars}\n${checksUsed} check${checksUsed !== 1 ? 's' : ''} used\n\nCan you beat my score?`;
+  navigator.clipboard.writeText(text).then(() => {
+    const el = document.getElementById('copy-confirm');
+    if (el) { el.textContent = 'Copied to clipboard!'; setTimeout(() => { el.textContent = ''; }, 2500); }
+  });
+}
+
+window.copyShare = copyShare;
+
+// ═══════════════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════════════
+function setMsg(html, type) {
+  const el = document.getElementById('msg-box');
+  if (!html) { el.className = 'msg-box'; return; }
+  el.className = 'msg-box show ' + (type || 'info');
+  el.innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════════════
+// GO
+// ═══════════════════════════════════════════════════════
+init();
+</script>
+</body>
+</html>
