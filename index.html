@@ -630,6 +630,7 @@ function toggleHow() {
 // RENDER
 // ═══════════════════════════════════════════════════════
 function render() {
+  if (!anchorGame) return; // not loaded yet
   renderPool();
   renderTimeline();
   renderStats();
