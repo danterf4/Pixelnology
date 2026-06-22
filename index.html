@@ -1127,7 +1127,11 @@ function setMsg(html, type) {
 // ═══════════════════════════════════════════════════════
 // GO
 // ═══════════════════════════════════════════════════════
-init();
+init().catch(err => {
+  console.error('Init failed:', err);
+  document.getElementById('pool-grid').innerHTML =
+    `<div style="color:var(--red);font-size:13px;padding:8px;">Failed to load games. Please refresh.</div>`;
+});
 </script>
 </body>
 </html>
