@@ -464,12 +464,13 @@
     gap: 8px;
     overflow-x: auto;
     padding-bottom: 4px;
-    scrollbar-width: thin;
-    scrollbar-color: var(--surface3) transparent;
+    scrollbar-width: auto;
+    scrollbar-color: var(--border-hi) var(--surface2);
   }
-  .dock-scroll::-webkit-scrollbar { height: 4px; }
-  .dock-scroll::-webkit-scrollbar-track { background: transparent; }
-  .dock-scroll::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 2px; }
+  .dock-scroll::-webkit-scrollbar { height: 8px; }
+  .dock-scroll::-webkit-scrollbar-track { background: var(--surface2); border-radius: 4px; }
+  .dock-scroll::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 4px; }
+  .dock-scroll::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 
   /* Pool cards in dock — slightly smaller than original */
   .pool-card {
