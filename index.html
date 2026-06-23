@@ -272,6 +272,27 @@
     font-family: var(--mono);
     color: var(--text-muted);
   }
+  .tl-section-status {
+    font-size: 11px;
+    font-family: var(--mono);
+    border-radius: 20px;
+    padding: 2px 10px;
+  }
+  .tl-section-status.wrong {
+    color: var(--red);
+    background: var(--red-bg);
+    border: 1px solid var(--red);
+  }
+  .tl-section-status.perfect {
+    color: var(--green);
+    background: var(--green-bg);
+    border: 1px solid var(--green);
+  }
+  .tl-section-status.incomplete {
+    color: var(--text-muted);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+  }
   .tl-section-wrap {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -308,7 +329,7 @@
   .tl-gap {
     display: flex;
     align-items: center;
-    height: 28px;
+    height: 44px;
     position: relative;
   }
   .tl-gap-line {
@@ -321,17 +342,38 @@
   .tl-drop-zone {
     margin-left: 66px;
     flex: 1;
-    height: 10px;
-    border-radius: 5px;
-    transition: height 0.12s, background 0.12s, border-color 0.12s;
-    border: 1.5px dashed transparent;
+    height: 36px;
+    border-radius: 8px;
+    transition: height 0.12s, background 0.12s, border-color 0.12s, box-shadow 0.12s;
+    border: 2px dashed var(--border-md);
+    background: var(--surface2);
     box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .tl-drop-zone::after {
+    content: '+ drop here';
+    font-size: 10px;
+    font-family: var(--mono);
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+    pointer-events: none;
+    opacity: 0.6;
   }
   .tl-drop-zone.drag-over {
-    height: 40px;
+    height: 52px;
     border-color: var(--accent);
     background: var(--accent-bg);
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
   }
+  .tl-drop-zone.drag-over::after {
+    color: var(--accent-light);
+    opacity: 1;
+  }
+
+  .tl-section-wrap.complete .tl-drop-zone { display: none; }
+  .tl-section-wrap.complete .tl-gap { height: 8px; }
 
   /* Placed item row */
   .tl-item {
@@ -534,7 +576,7 @@
 
   /* ── BOTTOM DOCK ── */
   body {
-    padding-bottom: 220px; /* reserve space so content isn't hidden behind dock */
+    padding-bottom: 240px; /* reserve space so content isn't hidden behind dock */
   }
   .bottom-dock {
     position: fixed;
@@ -576,18 +618,49 @@
     border-radius: 20px;
     padding: 2px 8px;
   }
+  .dock-scroll-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .dock-arrow {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--surface2);
+    border: 1px solid var(--border-md);
+    color: var(--text-muted);
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s, color 0.15s, opacity 0.15s;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    z-index: 2;
+  }
+  .dock-arrow:active { background: var(--accent-bg); color: var(--accent-light); }
+  .dock-arrow.hidden { opacity: 0; pointer-events: none; }
   .dock-scroll {
+    flex: 1;
     display: flex;
     gap: 8px;
     overflow-x: auto;
+    overflow-y: hidden;
     padding-bottom: 10px;
-    scrollbar-width: auto;
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
     scrollbar-color: var(--accent) var(--surface2);
   }
-  .dock-scroll::-webkit-scrollbar { height: 12px; }
-  .dock-scroll::-webkit-scrollbar-track { background: var(--surface2); border-radius: 6px; margin: 0 2px; }
-  .dock-scroll::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 6px; border: 2px solid var(--surface2); }
-  .dock-scroll::-webkit-scrollbar-thumb:hover { background: var(--accent-light); }
+  .dock-scroll::-webkit-scrollbar { height: 6px; }
+  .dock-scroll::-webkit-scrollbar-track { background: var(--surface2); border-radius: 999px; }
+  .dock-scroll::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 999px; }
+  .dock-scroll::-webkit-scrollbar-button { display: none; }
 
   /* Pool cards in dock — slightly smaller than original */
   .pool-card {
@@ -736,8 +809,12 @@
       <span class="dock-label">🎮 Game pool — drag onto the timeline</span>
       <span class="dock-count" id="dock-count">— remaining</span>
     </div>
-    <div class="dock-scroll">
-      <div class="pool-grid" id="pool-grid" style="display:flex;gap:8px;flex-wrap:nowrap;"></div>
+    <div class="dock-scroll-wrap">
+      <button class="dock-arrow hidden" id="dock-arrow-left" aria-label="Scroll left">‹</button>
+      <div class="dock-scroll" id="dock-scroll">
+        <div class="pool-grid" id="pool-grid" style="display:flex;gap:8px;flex-wrap:nowrap;"></div>
+      </div>
+      <button class="dock-arrow" id="dock-arrow-right" aria-label="Scroll right">›</button>
     </div>
   </div>
 </div>
@@ -747,7 +824,7 @@
 // CONFIG
 // ═══════════════════════════════════════════════════════
 const WORKER_URL = 'https://autumn-wave-6693.max-andres-rf.workers.dev';
-const DAILY_COUNT = 21;
+const DAILY_COUNT = 15;
 
 // ═══════════════════════════════════════════════════════
 // STATE
@@ -757,10 +834,12 @@ let sections = []; // [{anchor, timeline:[{game,locked,correct}], complete:false
 let poolGames = []; // all non-anchor games
 let checksUsed = 0;
 let gameWon = false;
+let gameLost = false;
 const coverCache = {};
 
-const SECTION_SIZE = 7; // games per section (1 anchor + 6 to place)
+const SECTION_SIZE = 5; // games per section (1 anchor + 4 to place)
 const NUM_SECTIONS = 3;
+const MAX_CHECKS = 3;
 const SECTION_LABELS = ['Early Era', 'Mid Era', 'Modern Era'];
 
 function getDailySeed() {
@@ -800,7 +879,7 @@ async function init() {
     return;
   }
 
-  // Split into 3 sections of 7, anchors at position 3 of each section (middle-ish)
+  // Split into 3 sections of 5, anchor at middle of each section
   sections = [];
   for (let s = 0; s < NUM_SECTIONS; s++) {
     const sectionGames = allGames.slice(s * SECTION_SIZE, (s + 1) * SECTION_SIZE);
@@ -814,9 +893,20 @@ async function init() {
     });
   }
 
-  // All non-anchor games go into the pool
+  // All non-anchor games go into the pool — shuffled with seeded RNG so order is scrambled but consistent per day
   const anchorIds = new Set(sections.map(s => s.anchor.id));
   poolGames = allGames.filter(g => !anchorIds.has(g.id));
+
+  // Seeded Fisher-Yates shuffle
+  let rngState = getDailySeed();
+  function seededRand() {
+    rngState ^= rngState << 13; rngState ^= rngState >> 17; rngState ^= rngState << 5;
+    return Math.abs(rngState) / 0x7fffffff;
+  }
+  for (let i = poolGames.length - 1; i > 0; i--) {
+    const j = Math.floor(seededRand() * (i + 1));
+    [poolGames[i], poolGames[j]] = [poolGames[j], poolGames[i]];
+  }
 
   render();
 }
@@ -912,9 +1002,24 @@ function renderTimeline() {
     // Section header
     const header = document.createElement('div');
     header.className = 'tl-section-header' + (sec.complete ? ' complete' : '');
+    const placed = sec.timeline.filter(t => !t.locked).length;
+    const total = SECTION_SIZE - 1;
+    const checked = sec.wrongCount !== undefined;
+    let rightHtml;
+    if (sec.complete) {
+      rightHtml = '<span class="tl-section-badge">✓ Complete</span>';
+    } else if (checked && sec.wrongCount === 0 && placed < total) {
+      rightHtml = `<span class="tl-section-status incomplete">${placed}/${total} placed</span>`;
+    } else if (checked && placed === total && sec.wrongCount > 0) {
+      rightHtml = `<span class="tl-section-status wrong">${sec.wrongCount} wrong</span>`;
+    } else if (checked && placed === total && sec.wrongCount === 0) {
+      rightHtml = `<span class="tl-section-status perfect">All correct!</span>`;
+    } else {
+      rightHtml = `<span class="tl-section-progress">${placed}/${total} placed</span>`;
+    }
     header.innerHTML = `
       <span class="tl-section-label">${sec.label}</span>
-      ${sec.complete ? '<span class="tl-section-badge">✓ Complete</span>' : `<span class="tl-section-progress">${sec.timeline.filter(t=>!t.locked).length}/${SECTION_SIZE - 1} placed</span>`}
+      ${rightHtml}
     `;
     container.appendChild(header);
 
@@ -961,7 +1066,7 @@ function makeItemRow(entry, sIdx, idx) {
   if (entry.locked && entry.correct !== false) {
     yearCol.textContent = entry.game.y;
     yearCol.style.color = 'var(--amber)';
-  } else if (sections[sIdx].complete || gameWon) {
+  } else if (sections[sIdx].complete || sections[sIdx].revealed || gameWon) {
     yearCol.textContent = entry.game.y;
     yearCol.style.color = entry.correct === false ? 'var(--red)' : 'var(--text-muted)';
   }
@@ -970,17 +1075,18 @@ function makeItemRow(entry, sIdx, idx) {
   const dot = document.createElement('div');
   dot.className = 'tl-dot' +
     (entry.locked ? ' anchor' : '') +
-    ((sections[sIdx].complete || gameWon) && entry.correct === true ? ' correct' : '') +
-    ((sections[sIdx].complete || gameWon) && entry.correct === false ? ' wrong' : '');
+    ((sections[sIdx].complete || sections[sIdx].revealed || gameWon) && entry.correct === true ? ' correct' : '') +
+    ((sections[sIdx].complete || sections[sIdx].revealed || gameWon) && entry.correct === false ? ' wrong' : '');
   row.appendChild(dot);
 
   const card = document.createElement('div');
   const sec = sections[sIdx];
+  const isRevealed = sec.complete || sec.revealed || gameWon;
   card.className = 'tl-card' +
     (entry.locked ? ' anchor-card' : '') +
-    (!entry.locked && !sec.complete && !gameWon ? ' removable' : '') +
-    ((sec.complete || gameWon) && entry.correct === true ? ' correct' : '') +
-    ((sec.complete || gameWon) && entry.correct === false ? ' wrong' : '');
+    (!entry.locked && !sec.complete && !sec.revealed && !gameWon ? ' removable' : '') +
+    (isRevealed && entry.correct === true ? ' correct' : '') +
+    (isRevealed && entry.correct === false ? ' wrong' : '');
 
   const left = document.createElement('div');
   left.className = 'tl-card-left';
@@ -1010,7 +1116,7 @@ function makeItemRow(entry, sIdx, idx) {
     yr.className = 'tl-card-year amber';
     yr.textContent = entry.game.y + ' ★';
     right.appendChild(yr);
-  } else if (sec.complete || gameWon) {
+  } else if (isRevealed) {
     const yr = document.createElement('div');
     yr.className = 'tl-card-year ' + (entry.correct ? 'green' : 'red');
     yr.textContent = entry.game.y;
@@ -1033,7 +1139,7 @@ function makeItemRow(entry, sIdx, idx) {
   card.appendChild(right);
   row.appendChild(card);
 
-  if (!entry.locked && !sec.complete && !gameWon) {
+  if (!entry.locked && !sec.complete && !sec.revealed && !gameWon) {
     card.draggable = true;
     card.addEventListener('dragstart', e => onDragStart(e, entry.game, 'timeline', sIdx, idx));
     card.addEventListener('dragend', onDragEnd);
@@ -1048,23 +1154,25 @@ function makeItemRow(entry, sIdx, idx) {
 // ═══════════════════════════════════════════════════════
 function removeGame(sIdx, idx) {
   const entry = sections[sIdx].timeline[idx];
-  if (entry.locked) return;
+  if (entry.locked || gameLost) return;
   sections[sIdx].timeline.splice(idx, 1);
+  delete sections[sIdx].wrongCount;
   render();
 }
 
 function clearAll() {
-  if (gameWon) return;
+  if (gameWon || gameLost) return;
   sections.forEach(sec => {
     if (!sec.complete) {
       sec.timeline = [{ game: sec.anchor, locked: true }];
+      delete sec.wrongCount;
     }
   });
   render();
 }
 
 function dropAt(sIdx, insertIdx) {
-  if (!dragState.game || gameWon) return;
+  if (!dragState.game || gameWon || gameLost) return;
   const sec = sections[sIdx];
   if (sec.complete) return;
   const g = dragState.game;
@@ -1088,6 +1196,7 @@ function dropAt(sIdx, insertIdx) {
   sec.timeline.splice(adjusted, 0, { game: g, locked: false });
   const entry = sec.timeline.find(t => t.game.id === g.id);
   if (entry) delete entry.correct;
+  delete sec.wrongCount;
   dragState = {};
   render();
 }
@@ -1114,7 +1223,7 @@ function onDragEnd(e) {
 let touchState = {};
 
 function onTouchStart(e, game, source, sectionIdx, timelineIdx) {
-  if (gameWon) return;
+  if (gameWon || gameLost) return;
   e.preventDefault();
   const touch = e.touches[0];
   const el = e.currentTarget;
@@ -1186,16 +1295,21 @@ function renderStats() {
 function updateCheckBtn() {
   const placed = sections.reduce((n, sec) => n + sec.timeline.filter(t => !t.locked).length, 0);
   const btn = document.getElementById('check-btn');
-  // Enable when each incomplete section has all 6 slots filled
   const allFilled = sections.every(sec => sec.complete || sec.timeline.filter(t => !t.locked).length === SECTION_SIZE - 1);
-  btn.disabled = !allFilled || gameWon;
+  const checksLeft = MAX_CHECKS - checksUsed;
+  btn.disabled = !allFilled || gameWon || gameLost;
+  if (!gameWon && !gameLost) {
+    btn.textContent = checksLeft <= MAX_CHECKS && checksUsed > 0
+      ? `Check timeline (${checksLeft} left)`
+      : 'Check timeline';
+  }
 }
 
 // ═══════════════════════════════════════════════════════
 // CHECK
 // ═══════════════════════════════════════════════════════
 function checkTimeline() {
-  if (gameWon) return;
+  if (gameWon || gameLost) return;
   checksUsed++;
 
   let newlyCompleted = 0;
@@ -1213,15 +1327,17 @@ function checkTimeline() {
 
     if (secWrong === 0 && sec.timeline.length === SECTION_SIZE) {
       sec.complete = true;
-      // Lock all entries in this section
+      sec.wrongCount = 0;
       sec.timeline.forEach(e => { e.locked = true; });
       newlyCompleted++;
     } else {
+      sec.wrongCount = secWrong;
       totalWrong += secWrong;
     }
   });
 
   const allDone = sections.every(s => s.complete);
+  const outOfAttempts = checksUsed >= MAX_CHECKS && !allDone;
 
   if (allDone) {
     gameWon = true;
@@ -1231,17 +1347,40 @@ function checkTimeline() {
     document.body.style.paddingBottom = '0';
     setTimeout(showEndScreen, 600);
     setMsg('', '');
+  } else if (outOfAttempts) {
+    gameLost = true;
+    // Reveal correct order for all incomplete sections
+    sections.forEach(sec => {
+      if (!sec.complete) {
+        // Sort timeline to the correct order
+        sec.timeline.sort((a, b) => a.game.y - b.game.y);
+        // Mark correctness for display
+        sec.timeline.forEach((entry, i) => {
+          const prevYear = i > 0 ? sec.timeline[i - 1].game.y : -Infinity;
+          const nextYear = i < sec.timeline.length - 1 ? sec.timeline[i + 1].game.y : Infinity;
+          entry.correct = entry.game.y >= prevYear && entry.game.y <= nextYear;
+        });
+        sec.revealed = true;
+      }
+    });
+    render();
+    const dock = document.getElementById('bottom-dock');
+    if (dock) dock.style.display = 'none';
+    document.body.style.paddingBottom = '0';
+    setMsg(`<strong>No attempts left!</strong> Here's the correct order.`, 'error');
+    setTimeout(showEndScreen, 800);
   } else {
     render();
+    const checksLeft = MAX_CHECKS - checksUsed;
     if (newlyCompleted > 0 && totalWrong === 0) {
-      setMsg(`<strong>${newlyCompleted} section${newlyCompleted > 1 ? 's' : ''} complete!</strong> Keep going — fill the remaining sections.`, 'success');
+      setMsg(`<strong>${newlyCompleted} section${newlyCompleted > 1 ? 's' : ''} complete!</strong> Keep going — ${checksLeft} attempt${checksLeft !== 1 ? 's' : ''} left.`, 'success');
     } else if (newlyCompleted > 0) {
-      setMsg(`<strong>${newlyCompleted} section${newlyCompleted > 1 ? 's' : ''} locked!</strong> Still ${totalWrong} wrong in remaining sections.`, 'warning');
+      setMsg(`<strong>${newlyCompleted} section${newlyCompleted > 1 ? 's' : ''} locked!</strong> Still ${totalWrong} wrong. ${checksLeft} attempt${checksLeft !== 1 ? 's' : ''} left.`, 'warning');
     } else {
       setMsg(totalWrong === 1
-        ? `<strong>1 game</strong> is in the wrong spot. Find it and move it!`
-        : `<strong>${totalWrong} games</strong> are in the wrong spots. Keep adjusting!`,
-        totalWrong === 1 ? 'error' : 'warning');
+        ? `<strong>1 game</strong> is in the wrong spot. ${checksLeft} attempt${checksLeft !== 1 ? 's' : ''} left!`
+        : `<strong>${totalWrong} games</strong> are in the wrong spots. ${checksLeft} attempt${checksLeft !== 1 ? 's' : ''} left!`,
+        checksLeft === 1 ? 'error' : 'warning');
     }
   }
 }
@@ -1253,33 +1392,56 @@ function showEndScreen() {
   document.getElementById('end-screen').style.display = 'block';
   document.getElementById('end-screen').scrollIntoView({ behavior: 'smooth' });
 
-  const stars = checksUsed === 1 ? '★★★' : checksUsed === 2 ? '★★☆' : checksUsed <= 4 ? '★☆☆' : '☆☆☆';
-  const emoji = checksUsed === 1 ? '🏆' : checksUsed <= 3 ? '🎮' : '🕹️';
-  const msg = checksUsed === 1 ? 'Perfect! First try!' : checksUsed <= 2 ? 'Excellent!' : checksUsed <= 4 ? 'Well done!' : 'Completed!';
+  const completedCount = sections.filter(s => s.complete).length;
+  let stars, emoji, msg;
+
+  if (gameLost) {
+    stars = completedCount === 0 ? '☆☆☆' : completedCount === 1 ? '★☆☆' : '★★☆';
+    emoji = '💀';
+    msg = completedCount === 0
+      ? 'Better luck next time!'
+      : `${completedCount}/3 section${completedCount > 1 ? 's' : ''} completed`;
+  } else {
+    stars = checksUsed === 1 ? '★★★' : checksUsed === 2 ? '★★☆' : '★☆☆';
+    emoji = checksUsed === 1 ? '🏆' : checksUsed <= 2 ? '🎮' : '🕹️';
+    msg = checksUsed === 1 ? 'Perfect! First try!' : checksUsed === 2 ? 'Excellent!' : 'Well done!';
+  }
 
   const anchorIds = new Set(sections.map(s => s.anchor.id));
-  const breakdown = sections.map((sec, sIdx) => {
-    const rows = sec.timeline.map(e => {
+  const breakdown = sections.map((sec) => {
+    // For display, use the correctly sorted order for revealed sections
+    const displayTimeline = sec.revealed
+      ? [...sec.timeline].sort((a, b) => a.game.y - b.game.y)
+      : sec.timeline;
+    const rows = displayTimeline.map(e => {
       const isAnchor = anchorIds.has(e.game.id);
+      const statusColor = isAnchor ? 'var(--amber)' : (sec.complete ? 'var(--green)' : (e.correct ? 'var(--green)' : 'var(--red)'));
+      const statusIcon = isAnchor ? '★' : (sec.complete || e.correct ? '✓' : '✗');
       return `<div class="end-row">
         <div class="er-title">${e.game.t}</div>
         <div style="display:flex;align-items:center;gap:8px">
           <div class="er-year" style="color:var(--text-dim)">${e.game.y}</div>
-          <div class="er-status">${isAnchor ? '<span style="color:var(--amber)">★</span>' : '<span style="color:var(--green)">✓</span>'}</div>
+          <div class="er-status"><span style="color:${statusColor}">${statusIcon}</span></div>
         </div>
       </div>`;
     }).join('');
+    const headerColor = sec.complete ? 'var(--green)' : (sec.revealed ? 'var(--red)' : 'var(--accent-light)');
+    const headerSuffix = sec.complete ? ' ✓' : (sec.revealed ? ' — solution shown' : '');
     return `<div style="margin-bottom:1rem">
-      <div style="font-size:11px;font-family:var(--mono);color:var(--accent-light);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px">${sec.label}</div>
+      <div style="font-size:11px;font-family:var(--mono);color:${headerColor};text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px">${sec.label}${headerSuffix}</div>
       ${rows}
     </div>`;
   }).join('');
+
+  const subLine = gameLost
+    ? `Out of attempts &nbsp;·&nbsp; ${completedCount}/3 sections correct`
+    : `${msg} &nbsp;·&nbsp; ${checksUsed} check${checksUsed !== 1 ? 's' : ''} used`;
 
   document.getElementById('end-screen').innerHTML = `
     <div class="end-card">
       <div class="end-emoji">${emoji}</div>
       <div class="end-score">${stars}</div>
-      <div class="end-score-sub">${msg} &nbsp;·&nbsp; ${checksUsed} check${checksUsed !== 1 ? 's' : ''} used</div>
+      <div class="end-score-sub">${subLine}</div>
       <div class="end-breakdown">${breakdown}</div>
       <div class="share-row">
         <button class="btn btn-primary" onclick="copyShare()">Share result</button>
@@ -1292,8 +1454,14 @@ function showEndScreen() {
 function copyShare() {
   const d = new Date();
   const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  const stars = checksUsed === 1 ? '★★★' : checksUsed === 2 ? '★★☆' : checksUsed <= 4 ? '★☆☆' : '☆☆☆';
-  const text = `Pixelnology — ${dateStr}\n${stars}\n${checksUsed} check${checksUsed !== 1 ? 's' : ''} used\n\nCan you beat my score?`;
+  const completedCount = sections.filter(s => s.complete).length;
+  const stars = gameLost
+    ? (completedCount === 0 ? '☆☆☆' : completedCount === 1 ? '★☆☆' : '★★☆')
+    : (checksUsed === 1 ? '★★★' : checksUsed === 2 ? '★★☆' : '★☆☆');
+  const result = gameLost
+    ? `Out of attempts — ${completedCount}/3 sections correct`
+    : `${checksUsed} check${checksUsed !== 1 ? 's' : ''} used`;
+  const text = `Pixelnology — ${dateStr}\n${stars}\n${result}\n\nCan you beat my score?`;
   navigator.clipboard.writeText(text).then(() => {
     const el = document.getElementById('copy-confirm');
     if (el) { el.textContent = 'Copied to clipboard!'; setTimeout(() => { el.textContent = ''; }, 2500); }
@@ -1319,8 +1487,33 @@ function setMsg(html, type) {
 }
 
 // ═══════════════════════════════════════════════════════
-// GO
+// DOCK SCROLL ARROWS
 // ═══════════════════════════════════════════════════════
+function initDockArrows() {
+  const scroll = document.getElementById('dock-scroll');
+  const left = document.getElementById('dock-arrow-left');
+  const right = document.getElementById('dock-arrow-right');
+  if (!scroll || !left || !right) return;
+
+  const STEP = 200;
+
+  function updateArrows() {
+    left.classList.toggle('hidden', scroll.scrollLeft <= 4);
+    right.classList.toggle('hidden', scroll.scrollLeft >= scroll.scrollWidth - scroll.clientWidth - 4);
+  }
+
+  left.addEventListener('click', () => { scroll.scrollBy({ left: -STEP, behavior: 'smooth' }); });
+  right.addEventListener('click', () => { scroll.scrollBy({ left: STEP, behavior: 'smooth' }); });
+  scroll.addEventListener('scroll', updateArrows, { passive: true });
+
+  // Re-check arrows after pool renders
+  const observer = new MutationObserver(updateArrows);
+  observer.observe(document.getElementById('pool-grid'), { childList: true });
+
+  updateArrows();
+}
+
+document.addEventListener('DOMContentLoaded', initDockArrows);
 init().catch(err => {
   console.error('Init failed:', err);
   document.getElementById('pool-grid').innerHTML =
