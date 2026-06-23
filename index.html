@@ -90,25 +90,73 @@
   }
   .how-bar:hover { border-color: var(--border-md); }
   .how-bar .how-icon { font-size: 15px; }
-  .how-arrow { margin-left: auto; transition: transform 0.2s; }
-  .how-arrow.open { transform: rotate(180deg); }
-  .how-content {
+
+  /* Modal overlay */
+  .how-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 3000;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+  .how-overlay.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .how-modal {
     background: var(--surface);
-    border: 1px solid var(--border);
-    border-top: none;
-    border-radius: 0 0 var(--radius) var(--radius);
-    padding: 1rem 1.25rem;
-    margin-top: -12px;
-    margin-bottom: 1.5rem;
-    display: none;
+    border: 1px solid var(--border-md);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem 1.75rem;
+    max-width: 480px;
+    width: 100%;
+    transform: translateY(12px) scale(0.97);
+    transition: transform 0.22s ease;
+    position: relative;
+  }
+  .how-overlay.open .how-modal {
+    transform: translateY(0) scale(1);
+  }
+  .how-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+  }
+  .how-modal-title {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: 0.4px;
+  }
+  .how-close {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: color 0.1s, background 0.1s;
+  }
+  .how-close:hover { color: var(--text); background: var(--surface2); }
+  .how-modal ol {
+    padding-left: 1.2rem;
     font-size: 13px;
     color: var(--text-dim);
     line-height: 1.8;
   }
-  .how-content.open { display: block; }
-  .how-content ol { padding-left: 1.2rem; }
-  .how-content li { margin-bottom: 4px; }
-  .how-content strong { color: var(--text); }
+  .how-modal li { margin-bottom: 6px; }
+  .how-modal strong { color: var(--text); }
 
   /* ── STATS ROW ── */
   .stats-row {
@@ -346,16 +394,31 @@
   .btn-sm { font-size: 12px; padding: 6px 14px; }
   .btn-ghost { background: transparent; }
 
-  /* ── MESSAGE BOX ── */
+  /* ── TOAST POPUP ── */
   .msg-box {
+    position: fixed;
+    top: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-12px);
+    z-index: 2000;
     border-radius: var(--radius);
-    padding: 12px 16px;
+    padding: 12px 20px;
     font-size: 13px;
-    margin-bottom: 1.25rem;
-    display: none;
     line-height: 1.6;
+    white-space: nowrap;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.22s ease, transform 0.22s ease;
+    max-width: calc(100vw - 2rem);
+    white-space: normal;
+    text-align: center;
   }
-  .msg-box.show { display: block; }
+  .msg-box.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+    pointer-events: auto;
+  }
   .msg-box.success { background: var(--green-bg); border: 1px solid var(--green); color: var(--green); }
   .msg-box.error { background: var(--red-bg); border: 1px solid var(--red); color: var(--red); }
   .msg-box.info { background: var(--accent-bg); border: 1px solid var(--accent); color: var(--accent-light); }
@@ -545,17 +608,24 @@
   <div class="how-bar" id="how-toggle">
     <span class="how-icon">🎮</span>
     <span>How to play</span>
-    <span class="how-arrow" id="how-arrow">▾</span>
   </div>
-  <div class="how-content" id="how-content">
-    <ol>
-      <li><strong>Drag a game</strong> from the pool and drop it into a slot on the timeline. On mobile, press and hold to drag.</li>
-      <li>One game is pre-placed as an anchor. Build the timeline around it in <strong>chronological order</strong> (oldest → newest, top to bottom).</li>
-      <li>Place <strong>all games</strong> before checking — you won't get feedback until every slot is filled.</li>
-      <li>Hit <strong>Check Timeline</strong>. You'll be told how many are wrong, but not which ones.</li>
-      <li>Drag games to new spots and check again until every game is in the right place.</li>
-      <li>Years are revealed only when <strong>every game is in the correct spot</strong>!</li>
-    </ol>
+
+  <!-- HOW TO PLAY MODAL -->
+  <div class="how-overlay" id="how-overlay">
+    <div class="how-modal">
+      <div class="how-modal-header">
+        <span class="how-modal-title">🎮 HOW TO PLAY</span>
+        <button class="how-close" id="how-close">✕</button>
+      </div>
+      <ol>
+        <li><strong>Drag a game</strong> from the pool and drop it into a slot on the timeline. On mobile, press and hold to drag.</li>
+        <li>One game is pre-placed as an anchor. Build the timeline around it in <strong>chronological order</strong> (oldest → newest, top to bottom).</li>
+        <li>Place <strong>all games</strong> before checking — you won't get feedback until every slot is filled.</li>
+        <li>Hit <strong>Check Timeline</strong>. You'll be told how many are wrong, but not which ones.</li>
+        <li>Drag games to new spots and check again until every game is in the right place.</li>
+        <li>Years are revealed only when <strong>every game is in the correct spot</strong>!</li>
+      </ol>
+    </div>
   </div>
 
   <!-- STATS -->
@@ -623,7 +693,7 @@
 // CONFIG
 // ═══════════════════════════════════════════════════════
 const WORKER_URL = 'https://autumn-wave-6693.max-andres-rf.workers.dev';
-const DAILY_COUNT = 10;
+const DAILY_COUNT = 20;
 
 // ═══════════════════════════════════════════════════════
 // STATE
@@ -681,11 +751,19 @@ async function init() {
 }
 
 function toggleHow() {
-  const c = document.getElementById('how-content');
-  const a = document.getElementById('how-arrow');
-  c.classList.toggle('open');
-  a.classList.toggle('open');
+  document.getElementById('how-overlay').classList.toggle('open');
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('how-close').addEventListener('click', () => {
+    document.getElementById('how-overlay').classList.remove('open');
+  });
+  document.getElementById('how-overlay').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) {
+      e.currentTarget.classList.remove('open');
+    }
+  });
+});
 
 // ═══════════════════════════════════════════════════════
 // RENDER
@@ -1080,11 +1158,17 @@ window.copyShare = copyShare;
 // ═══════════════════════════════════════════════════════
 // UTILS
 // ═══════════════════════════════════════════════════════
+let msgTimer = null;
 function setMsg(html, type) {
   const el = document.getElementById('msg-box');
+  if (msgTimer) { clearTimeout(msgTimer); msgTimer = null; }
   if (!html) { el.className = 'msg-box'; return; }
   el.className = 'msg-box show ' + (type || 'info');
   el.innerHTML = html;
+  msgTimer = setTimeout(() => {
+    el.className = 'msg-box';
+    msgTimer = null;
+  }, 4000);
 }
 
 // ═══════════════════════════════════════════════════════
