@@ -744,6 +744,37 @@
     body { padding-bottom: 200px; }
     .pool-card { width: 76px; }
     .pc-cover { height: 95px; }
+
+    /* ── MOBILE VERTICAL TIMELINE CARDS ── */
+    .tl-card {
+      flex-direction: column;
+      align-items: stretch;
+      padding: 0;
+      overflow: hidden;
+    }
+    .tl-card-left {
+      flex-direction: column !important;
+      align-items: stretch !important;
+      gap: 0 !important;
+      flex: 1 !important;
+    }
+    .tl-thumb {
+      width: 100%;
+      height: 150px;
+      border-radius: 0;
+      margin-right: 0;
+      flex-shrink: 0;
+    }
+    .tl-card-title {
+      white-space: normal;
+      padding: 8px 10px 4px;
+      font-size: 18px;
+    }
+    .tl-card-right {
+      width: 100%;
+      padding: 0 10px 8px;
+      justify-content: space-between;
+    }
   }
 
   /* ── DESKTOP LEFT SIDEBAR DOCK ── */
