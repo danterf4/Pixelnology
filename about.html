@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>About — Pixelnology</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<style>
+  .about-page {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 0 1.5rem 4rem;
+  }
+  .about-section {
+    margin-bottom: 3rem;
+  }
+  .about-section h2 {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--accent-light);
+    margin-bottom: 1rem;
+  }
+  .about-section p {
+    color: var(--text-dim);
+    line-height: 1.75;
+    margin-bottom: 0.75rem;
+  }
+  .about-section p:last-child {
+    margin-bottom: 0;
+  }
+  .about-section strong {
+    color: var(--text);
+    font-weight: 600;
+  }
+  .about-hero {
+    padding: 3rem 0 2.5rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 3rem;
+  }
+  .about-hero-title {
+    font-family: var(--mono);
+    font-size: clamp(28px, 5vw, 42px);
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -1px;
+    line-height: 1.1;
+    margin-bottom: 1rem;
+  }
+  .about-hero-title span {
+    color: var(--accent-light);
+  }
+  .about-hero-sub {
+    color: var(--text-dim);
+    font-size: 16px;
+    line-height: 1.65;
+    max-width: 520px;
+  }
+  .about-card {
+    background: var(--surface);
+    border: 1px solid var(--border-md);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    margin-top: 1.25rem;
+  }
+  .about-card-name {
+    font-family: var(--mono);
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 0.25rem;
+  }
+  .about-card-role {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    font-family: var(--mono);
+    margin-bottom: 0.75rem;
+  }
+  .about-card p {
+    color: var(--text-dim);
+    font-size: 14px;
+    line-height: 1.65;
+    margin-bottom: 0;
+  }
+  .contact-links {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 1.25rem;
+  }
+  .contact-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--surface);
+    border: 1px solid var(--border-md);
+    border-radius: var(--radius);
+    padding: 0.75rem 1.25rem;
+    color: var(--text-dim);
+    text-decoration: none;
+    font-size: 14px;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+  }
+  .contact-link:hover {
+    border-color: var(--accent);
+    color: var(--accent-light);
+    background: var(--accent-bg);
+  }
+  .contact-link-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    min-width: 52px;
+  }
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-muted);
+    text-decoration: none;
+    padding: 0.5rem 0;
+    transition: color 0.15s;
+  }
+  .back-link:hover { color: var(--accent-light); }
+</style>
+</head>
+<body>
+<div class="about-page">
+
+  <!-- HEADER -->
+  <header class="site-header">
+    <a href="index.html" class="logo" style="text-decoration:none;">PIXEL<span>NOLOGY</span></a>
+    <div class="header-meta">
+      <a href="index.html" class="back-link">← Play today's puzzle</a>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <div class="about-hero">
+    <div class="about-hero-title">About<br><span>Pixelnology</span></div>
+    <p class="about-hero-sub">A daily game timeline puzzle — place video games in chronological order across three eras and see how well you know gaming history.</p>
+  </div>
+
+  <!-- WHAT IS IT -->
+  <div class="about-section">
+    <h2>What is Pixelnology?</h2>
+    <p>
+      Pixelnology is a <strong>daily browser puzzle</strong> inspired by the love of video game history.
+      Each day a new set of 15 games is drawn from across gaming's timeline — from the early 80s
+      all the way to the modern era.
+    </p>
+    <p>
+      The games are split into <strong>three eras</strong>: Early, Mid, and Modern. Each era has
+      one anchor game pre-placed to give you a reference point. Your job is to drag the remaining
+      games into the right chronological slots within each era.
+    </p>
+    <p>
+      You get up to <strong>three checks</strong>. Completed eras lock in and turn green. The catch?
+      Release years are hidden until an era is fully correct — so you're playing on memory and intuition alone.
+    </p>
+  </div>
+
+  <!-- WHO MADE IT -->
+  <div class="about-section">
+    <h2>Who made it</h2>
+    <div class="about-card">
+      <div class="about-card-name">Max</div>
+      <div class="about-card-role">Creator &amp; Developer</div>
+      <p>
+        Pixelnology is a personal project born from a curiosity about game history and a love of daily puzzle games.
+        Built from scratch with vanilla HTML, CSS, and JavaScript — no frameworks, just code and a lot of game trivia.
+      </p>
+    </div>
+  </div>
+
+  <!-- CONTACT -->
+  <div class="about-section">
+    <h2>Get in touch</h2>
+    <p>Have a suggestion, found a bug, or just want to say hi? Reach out.</p>
+    <div class="contact-links">
+      <a href="mailto:max.andres.rf@gmail.com" class="contact-link">
+        <span class="contact-link-label">Email</span>
+        max.andres.rf@gmail.com
+      </a>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <img src="https://www.igdb.com/assets/logos/igdb_logo.png" alt="IGDB logo" onerror="this.style.display='none'">
+    <p>Game information provided by <a href="https://www.igdb.com" target="_blank" rel="noopener">IGDB</a></p>
+  </footer>
+
+</div>
+</body>
+</html>
