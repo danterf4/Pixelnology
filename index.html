@@ -1446,7 +1446,7 @@ function onTouchStart(e, game, source, sectionIdx, timelineIdx) {
   `;
   document.body.appendChild(ghost);
   el.classList.add('dragging');
-  touchState = { el, ghost, offsetX: touch.clientX - rect.left, offsetY: touch.clientY - rect.top, lastZone: null };
+  touchState = { el, ghost, offsetX: touch.clientX - rect.left, offsetY: touch.clientY - rect.top, lastZone: null, startX: touch.clientX, startY: touch.clientY, moved: false };
 
   document.addEventListener('touchmove', onTouchMove, { passive: false });
   document.addEventListener('touchend', onTouchEnd);
@@ -1455,7 +1455,8 @@ function onTouchStart(e, game, source, sectionIdx, timelineIdx) {
 function onTouchMove(e) {
   e.preventDefault();
   const touch = e.touches[0];
-  const { ghost, offsetX, offsetY, lastZone } = touchState;
+  const { ghost, offsetX, offsetY, lastZone, startX, startY } = touchState;
+  if (Math.abs(touch.clientX - startX) > 8 || Math.abs(touch.clientY - startY) > 8) touchState.moved = true;
   ghost.style.left = (touch.clientX - offsetX) + 'px';
   ghost.style.top = (touch.clientY - offsetY) + 'px';
   ghost.style.display = 'none';
@@ -1472,7 +1473,18 @@ function onTouchMove(e) {
 function onTouchEnd(e) {
   document.removeEventListener('touchmove', onTouchMove);
   document.removeEventListener('touchend', onTouchEnd);
-  const { el, ghost, lastZone } = touchState;
+  const { el, ghost, lastZone, moved } = touchState;
+
+  // Tap (no drag movement) on a pool card → open info popup
+  if (!moved && dragState.source === 'pool') {
+    const tappedGame = dragState.game;
+    if (ghost) ghost.remove();
+    if (el) el.classList.remove('dragging');
+    dragState = {};
+    touchState = {};
+    openGamePopup(tappedGame);
+    return;
+  }
   if (ghost) ghost.remove();
   if (el) el.classList.remove('dragging');
   if (lastZone) {
