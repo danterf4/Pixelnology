@@ -820,6 +820,75 @@
     .timeline-actions-panel .btn { width: 100%; flex: none; }
   }
 
+  /* ── GAME INFO POPUP ── */
+  .game-popup-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 10000;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+  .game-popup-overlay.open { display: flex; }
+  .game-popup {
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--border-md);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    width: 220px;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+    animation: popup-in 0.18s ease;
+  }
+  @keyframes popup-in {
+    from { opacity: 0; transform: scale(0.92); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+  .game-popup-close {
+    position: absolute;
+    top: 10px; right: 10px;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.55);
+    border: none;
+    color: #fff;
+    font-size: 13px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+    transition: background 0.12s;
+  }
+  .game-popup-close:hover { background: rgba(255,255,255,0.15); }
+  .game-popup-cover {
+    width: 100%;
+    height: 293px; /* 220px wide × 4/3 ratio ≈ portrait game cover */
+    background: var(--surface3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 48px;
+    opacity: 0.4;
+  }
+  .game-popup-cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .game-popup-title {
+    padding: 14px 16px 18px;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.4;
+    text-align: center;
+  }
+
   /* ── SCANLINE OVERLAY ── */
   body::after {
     content: '';
@@ -922,6 +991,15 @@
   <!-- END SCREEN -->
   <div id="end-screen"></div>
 
+</div>
+
+<!-- GAME INFO POPUP -->
+<div class="game-popup-overlay" id="game-popup-overlay">
+  <div class="game-popup">
+    <button class="game-popup-close" id="game-popup-close">✕</button>
+    <div class="game-popup-cover" id="game-popup-cover"></div>
+    <div class="game-popup-title" id="game-popup-title"></div>
+  </div>
 </div>
 
 <!-- FIXED BOTTOM DOCK -->
@@ -1113,6 +1191,12 @@ function renderPool() {
       div.addEventListener('dragend', onDragEnd);
       div.addEventListener('touchstart', e => onTouchStart(e, g, 'pool', null, null), { passive: false });
     }
+
+    // Click opens info popup (only if not a drag)
+    div.addEventListener('click', e => {
+      if (!div.classList.contains('dragging')) openGamePopup(g);
+    });
+
     grid.appendChild(div);
   });
 }
@@ -1608,6 +1692,40 @@ function setMsg(html, type) {
     msgTimer = null;
   }, 4000);
 }
+
+// ═══════════════════════════════════════════════════════
+// GAME INFO POPUP
+// ═══════════════════════════════════════════════════════
+function openGamePopup(game) {
+  const overlay = document.getElementById('game-popup-overlay');
+  const coverEl = document.getElementById('game-popup-cover');
+  const titleEl = document.getElementById('game-popup-title');
+
+  titleEl.textContent = game.t;
+
+  const url = coverCache[game.id];
+  if (url && url !== 'loading' && url !== 'none') {
+    coverEl.innerHTML = `<img src="${url}" alt="${game.t}" onerror="this.parentNode.innerHTML='🎮'">`;
+  } else {
+    coverEl.innerHTML = '🎮';
+  }
+
+  overlay.classList.add('open');
+}
+
+function closeGamePopup() {
+  document.getElementById('game-popup-overlay').classList.remove('open');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('game-popup-close').addEventListener('click', closeGamePopup);
+  document.getElementById('game-popup-overlay').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeGamePopup();
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeGamePopup();
+  });
+});
 
 // ═══════════════════════════════════════════════════════
 // DOCK SCROLL ARROWS
