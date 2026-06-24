@@ -44,7 +44,7 @@
   }
 
   /* ── LAYOUT ── */
-  .page { max-width: 860px; margin: 0 auto; padding: 0 1rem 0; }
+  .page { max-width: none; margin: 0; padding: 0 1.5rem 0; }
 
   /* ── FOOTER ── */
   .site-footer {
@@ -493,6 +493,23 @@
     margin-bottom: 1.75rem;
     flex-wrap: wrap;
   }
+
+  /* ── TIMELINE LAYOUT ── */
+  .timeline-layout {
+    margin-bottom: 1.75rem;
+  }
+  .timeline-area {
+    margin-bottom: 1rem;
+  }
+  .timeline-actions-panel {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .timeline-actions-panel .btn {
+    flex: 1;
+    text-align: center;
+  }
   .btn {
     font-family: var(--sans);
     font-size: 14px;
@@ -731,11 +748,11 @@
 
   /* ── DESKTOP LEFT SIDEBAR DOCK ── */
   @media (min-width: 561px) {
-    body { padding-bottom: 0; padding-left: 210px; }
+    body { padding-bottom: 0; padding-left: 310px; }
     .bottom-dock {
       top: 0;
       right: auto;
-      width: 210px;
+      width: 310px;
       border-top: none;
       border-right: 1px solid var(--border-md);
       box-shadow: 4px 0 24px rgba(0,0,0,0.4);
@@ -746,7 +763,7 @@
     .dock-inner {
       max-width: none;
       margin: 0;
-      padding: 0 8px;
+      padding: 0 16px;
       display: flex;
       flex-direction: column;
       flex: 1;
@@ -776,10 +793,31 @@
     .dock-scroll::-webkit-scrollbar { width: 4px; height: auto; }
     #pool-grid { display: grid !important; grid-template-columns: 1fr 1fr; gap: 8px; }
     .pool-card { width: auto; }
+    /* Cards bigger */
+    .pc-cover { height: 170px; }
+    .pc-body { padding: 7px 9px 9px; }
+    /* Fonts 20% bigger */
+    .dock-label { font-size: 12px; }
+    .dock-count { font-size: 12px; }
+    .pool-card .pc-title { font-size: 13px; min-height: 34px; }
+    .pool-card .pc-check { font-size: 13px; width: 21px; height: 21px; }
+    .pc-cover-icon { font-size: 31px; }
     #dock-arrow-left { font-size: 0; }
-    #dock-arrow-left::after { content: '↑'; font-size: 16px; }
+    #dock-arrow-left::after { content: '↑'; font-size: 19px; }
     #dock-arrow-right { font-size: 0; }
-    #dock-arrow-right::after { content: '↓'; font-size: 16px; }
+    #dock-arrow-right::after { content: '↓'; font-size: 19px; }
+    /* Timeline 80/20 split */
+    .timeline-layout { display: flex; gap: 1.5rem; align-items: flex-start; }
+    .timeline-area { flex: 4; min-width: 0; margin-bottom: 0; }
+    .timeline-actions-panel {
+      flex: 1;
+      flex-direction: column;
+      flex-wrap: nowrap;
+      position: sticky;
+      top: 1rem;
+      gap: 12px;
+    }
+    .timeline-actions-panel .btn { width: 100%; flex: none; }
   }
 
   /* ── SCANLINE OVERLAY ── */
@@ -861,20 +899,24 @@
 
   <!-- GAME POOL (rendered by JS into bottom dock) -->
 
-  <!-- TIMELINE -->
-  <div class="timeline-area">
-    <div class="section-label" style="margin-bottom:14px;">Timeline — 3 eras, oldest at top, newest at bottom</div>
-    <div class="timeline-track">
-      <div class="tl-spine" id="tl-spine"></div>
-      <div class="tl-items" id="tl-items"></div>
-    </div>
-  </div>
+  <!-- TIMELINE + ACTIONS LAYOUT -->
+  <div class="timeline-layout">
 
-  <!-- ACTIONS -->
-  <div class="actions-row">
-    <button class="btn btn-primary" id="check-btn" disabled>Check timeline</button>
-    <button class="btn btn-ghost btn-sm" id="clear-btn">Clear all</button>
-    <button class="btn btn-ghost btn-sm" id="how-btn" onclick="document.getElementById('how-toggle').click()">How to play</button>
+    <!-- 80%: Timeline -->
+    <div class="timeline-area">
+      <div class="section-label" style="margin-bottom:14px;">Timeline — 3 eras, oldest at top, newest at bottom</div>
+      <div class="timeline-track">
+        <div class="tl-spine" id="tl-spine"></div>
+        <div class="tl-items" id="tl-items"></div>
+      </div>
+    </div>
+
+    <!-- 20%: Action buttons -->
+    <div class="timeline-actions-panel">
+      <button class="btn btn-primary" id="check-btn" disabled>Check timeline</button>
+      <button class="btn btn-ghost btn-sm" id="clear-btn">Clear all</button>
+    </div>
+
   </div>
 
   <!-- END SCREEN -->
@@ -1042,6 +1084,7 @@ function renderPool() {
     const div = document.createElement('div');
     div.className = 'pool-card' + (placed ? ' placed' : '');
     div.dataset.id = g.id;
+    div.title = g.t;
 
     const coverDiv = document.createElement('div');
     coverDiv.className = 'pc-cover';
