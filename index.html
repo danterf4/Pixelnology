@@ -44,7 +44,34 @@
   }
 
   /* ── LAYOUT ── */
-  .page { max-width: 860px; margin: 0 auto; padding: 0 1rem 4rem; }
+  .page { max-width: 860px; margin: 0 auto; padding: 0 1rem 0; }
+
+  /* ── FOOTER ── */
+  .site-footer {
+    margin-top: 4rem;
+    border-top: 1px solid var(--border);
+    padding: 1.5rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+  .site-footer img {
+    height: 20px;
+    opacity: 0.7;
+    vertical-align: middle;
+  }
+  .site-footer p {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-align: center;
+  }
+  .site-footer a {
+    color: var(--accent-light);
+    text-decoration: none;
+  }
+  .site-footer a:hover { text-decoration: underline; }
 
   /* ── HEADER ── */
   .site-header {
@@ -700,6 +727,59 @@
     body { padding-bottom: 200px; }
     .pool-card { width: 76px; }
     .pc-cover { height: 95px; }
+  }
+
+  /* ── DESKTOP LEFT SIDEBAR DOCK ── */
+  @media (min-width: 561px) {
+    body { padding-bottom: 0; padding-left: 210px; }
+    .bottom-dock {
+      top: 0;
+      right: auto;
+      width: 210px;
+      border-top: none;
+      border-right: 1px solid var(--border-md);
+      box-shadow: 4px 0 24px rgba(0,0,0,0.4);
+      padding: 14px 0;
+      display: flex;
+      flex-direction: column;
+    }
+    .dock-inner {
+      max-width: none;
+      margin: 0;
+      padding: 0 8px;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      overflow: hidden;
+    }
+    .dock-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+    .dock-label { white-space: normal; line-height: 1.3; }
+    .dock-scroll-wrap {
+      flex-direction: column;
+      align-items: stretch;
+      flex: 1;
+      overflow: hidden;
+      gap: 4px;
+    }
+    .dock-scroll {
+      display: block;
+      overflow-x: hidden;
+      overflow-y: auto;
+      padding-bottom: 0;
+      flex: 1;
+    }
+    .dock-scroll::-webkit-scrollbar { width: 4px; height: auto; }
+    #pool-grid { display: grid !important; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .pool-card { width: auto; }
+    #dock-arrow-left { font-size: 0; }
+    #dock-arrow-left::after { content: '↑'; font-size: 16px; }
+    #dock-arrow-right { font-size: 0; }
+    #dock-arrow-right::after { content: '↓'; font-size: 16px; }
   }
 
   /* ── SCANLINE OVERLAY ── */
@@ -1496,19 +1576,32 @@ function initDockArrows() {
   if (!scroll || !left || !right) return;
 
   const STEP = 200;
+  const isDesktop = () => window.innerWidth > 560;
 
   function updateArrows() {
-    left.classList.toggle('hidden', scroll.scrollLeft <= 4);
-    right.classList.toggle('hidden', scroll.scrollLeft >= scroll.scrollWidth - scroll.clientWidth - 4);
+    if (isDesktop()) {
+      left.classList.toggle('hidden', scroll.scrollTop <= 4);
+      right.classList.toggle('hidden', scroll.scrollTop >= scroll.scrollHeight - scroll.clientHeight - 4);
+    } else {
+      left.classList.toggle('hidden', scroll.scrollLeft <= 4);
+      right.classList.toggle('hidden', scroll.scrollLeft >= scroll.scrollWidth - scroll.clientWidth - 4);
+    }
   }
 
-  left.addEventListener('click', () => { scroll.scrollBy({ left: -STEP, behavior: 'smooth' }); });
-  right.addEventListener('click', () => { scroll.scrollBy({ left: STEP, behavior: 'smooth' }); });
+  left.addEventListener('click', () => {
+    if (isDesktop()) scroll.scrollBy({ top: -STEP, behavior: 'smooth' });
+    else scroll.scrollBy({ left: -STEP, behavior: 'smooth' });
+  });
+  right.addEventListener('click', () => {
+    if (isDesktop()) scroll.scrollBy({ top: STEP, behavior: 'smooth' });
+    else scroll.scrollBy({ left: STEP, behavior: 'smooth' });
+  });
   scroll.addEventListener('scroll', updateArrows, { passive: true });
 
-  // Re-check arrows after pool renders
+  // Re-check arrows after pool renders or window resizes
   const observer = new MutationObserver(updateArrows);
   observer.observe(document.getElementById('pool-grid'), { childList: true });
+  window.addEventListener('resize', updateArrows);
 
   updateArrows();
 }
@@ -1520,5 +1613,10 @@ init().catch(err => {
     `<div style="color:var(--red);font-size:13px;padding:8px;">Failed to load games. Please refresh.</div>`;
 });
 </script>
+
+<footer class="site-footer">
+  <img src="https://www.igdb.com/assets/logos/igdb_logo.png" alt="IGDB logo" onerror="this.style.display='none'">
+  <p>Game information provided by <a href="https://www.igdb.com" target="_blank" rel="noopener">IGDB</a></p>
+</footer>
 </body>
 </html>
