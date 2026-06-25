@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Blog — Pixelnology</title>
 <link rel="stylesheet" href="styles.css">
+<script src="i18n.js"></script>
 <style>
   .blog-page {
     max-width: 680px;
@@ -213,15 +214,15 @@
   <!-- POST LIST -->
   <div class="post-list-wrap" id="post-list-wrap">
     <div class="blog-hero">
-      <div class="blog-hero-title">Max's <span>Blog</span></div>
-      <div class="blog-hero-sub">Thoughts on games, building things, and everything else.</div>
+      <div class="blog-hero-title" data-i18n-html="blog.hero.title">Max's <span>Blog</span></div>
+      <div class="blog-hero-sub" data-i18n="blog.hero.sub">Thoughts on games, building things, and everything else.</div>
     </div>
     <div class="post-list" id="post-list"></div>
   </div>
 
   <!-- SINGLE POST VIEW -->
   <div class="post-view" id="post-view">
-    <button class="back-btn" id="back-btn">← All posts</button>
+    <button class="back-btn" id="back-btn" data-i18n="blog.back">← All posts</button>
     <div class="post-header">
       <div class="post-title" id="post-title"></div>
       <div class="post-meta">
@@ -240,14 +241,26 @@
 
 <script src="posts/index.js"></script>
 <script>
+  // Pick the right string from a value that may be plain string or { en, es } object
+  function str(val) {
+    if (!val) return '';
+    if (typeof val === 'string') return val;
+    var lang = window.i18n ? window.i18n.lang : 'en';
+    return val[lang] || val.en || '';
+  }
+
   function formatDate(iso) {
     const [y, m, d] = iso.split('-').map(Number);
-    return new Date(y, m - 1, d).toLocaleDateString('en-US', {
+    const locale = window.i18n && window.i18n.lang === 'es' ? 'es-ES' : 'en-US';
+    return new Date(y, m - 1, d).toLocaleDateString(locale, {
       month: 'long', day: 'numeric', year: 'numeric'
     });
   }
 
+  let currentMeta = null;
+
   function showList() {
+    currentMeta = null;
     document.getElementById('post-list-wrap').classList.remove('hidden');
     document.getElementById('post-view').classList.remove('active');
     document.title = 'Blog — Pixelnology';
@@ -255,19 +268,21 @@
   }
 
   async function showPost(meta) {
+    currentMeta = meta;
     document.getElementById('post-list-wrap').classList.add('hidden');
 
-    document.getElementById('post-title').textContent = meta.title;
+    const title = str(meta.title);
+    document.getElementById('post-title').textContent = title;
     document.getElementById('post-date').textContent = formatDate(meta.date);
 
     const tagsEl = document.getElementById('post-tags');
     tagsEl.innerHTML = (meta.tags || []).map(t => `<span class="post-tag">${t}</span>`).join('');
 
     const bodyEl = document.getElementById('post-body');
-    bodyEl.innerHTML = '<p style="color:var(--text-muted)">Loading…</p>';
+    bodyEl.innerHTML = `<p style="color:var(--text-muted)">${window.i18n ? window.i18n.t('blog.loading') : 'Loading…'}</p>`;
 
     document.getElementById('post-view').classList.add('active');
-    document.title = `${meta.title} — Pixelnology`;
+    document.title = `${title} — Pixelnology`;
     history.pushState({ postId: meta.id }, '', `blog.html#${meta.id}`);
     window.scrollTo({ top: 0 });
 
@@ -275,19 +290,23 @@
       const res = await fetch(`posts/${meta.id}.html`);
       if (!res.ok) throw new Error('Not found');
       bodyEl.innerHTML = await res.text();
+      // Show/hide language sections in the post
+      if (window.i18n) window.i18n.apply();
     } catch (e) {
-      bodyEl.innerHTML = '<p style="color:var(--red)">Could not load post.</p>';
+      bodyEl.innerHTML = `<p style="color:var(--red)">${window.i18n ? window.i18n.t('blog.error') : 'Could not load post.'}</p>`;
     }
   }
 
   function renderList() {
     const list = document.getElementById('post-list');
     if (!POST_INDEX || POST_INDEX.length === 0) {
-      list.innerHTML = '<div class="blog-empty">No posts yet.</div>';
+      list.innerHTML = `<div class="blog-empty">${window.i18n ? window.i18n.t('blog.empty') : 'No posts yet.'}</div>`;
       return;
     }
     list.innerHTML = '';
     POST_INDEX.forEach(meta => {
+      const title   = str(meta.title);
+      const excerpt = str(meta.excerpt);
       const card = document.createElement('div');
       card.className = 'post-card';
       card.innerHTML = `
@@ -295,8 +314,8 @@
           <span class="post-card-date">${formatDate(meta.date)}</span>
           ${(meta.tags || []).map(t => `<span class="post-tag">${t}</span>`).join('')}
         </div>
-        <div class="post-card-title">${meta.title}</div>
-        ${meta.excerpt ? `<div class="post-card-excerpt">${meta.excerpt}</div>` : ''}
+        <div class="post-card-title">${title}</div>
+        ${excerpt ? `<div class="post-card-excerpt">${excerpt}</div>` : ''}
       `;
       card.addEventListener('click', () => showPost(meta));
       list.appendChild(card);
@@ -311,6 +330,16 @@
     }
     showList();
   }
+
+  // Re-render when language changes
+  window.addEventListener('langchange', () => {
+    renderList();
+    if (currentMeta) {
+      document.getElementById('post-title').textContent = str(currentMeta.title);
+      document.getElementById('post-date').textContent = formatDate(currentMeta.date);
+      if (window.i18n) window.i18n.apply();
+    }
+  });
 
   document.getElementById('back-btn').addEventListener('click', showList);
   window.addEventListener('popstate', route);

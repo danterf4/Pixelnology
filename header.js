@@ -1,26 +1,40 @@
 (function () {
-  const file = window.location.pathname.split('/').pop() || 'index.html';
+  var file = window.location.pathname.split('/').pop() || 'index.html';
+  var t = function (key) { return window.i18n ? window.i18n.t(key) : key; };
+  var lang = window.i18n ? window.i18n.lang : 'en';
 
-  const NAV = [
-    { href: 'index.html', label: 'Daily Challenge' },
-    { href: 'blog.html',  label: 'Blog' },
-    { href: 'about.html', label: 'About' }
+  var NAV = [
+    { href: 'index.html', key: 'nav.daily' },
+    { href: 'blog.html',  key: 'nav.blog'  },
+    { href: 'about.html', key: 'nav.about' }
   ];
 
-  const navHtml = NAV.map(p =>
-    `<a href="${p.href}" class="site-nav-link${file === p.href ? ' active' : ''}">${p.label}</a>`
-  ).join('');
+  var navHtml = NAV.map(function (p) {
+    var active = file === p.href ? ' active' : '';
+    return '<a href="' + p.href + '" class="site-nav-link' + active + '" data-i18n="' + p.key + '">' + t(p.key) + '</a>';
+  }).join('');
 
-  const header = document.createElement('header');
+  var header = document.createElement('header');
   header.className = 'site-header';
-  header.innerHTML = `
-    <div class="logo-wrap">
-      <div class="logo">PIX<span>OLOGY</span></div>
-      <div class="logo-sub">Video Game Timeline</div>
-    </div>
-    <nav class="site-nav">${navHtml}</nav>
-  `;
+  header.innerHTML =
+    '<div class="logo-wrap">' +
+      '<div class="logo">PIX<span>OLOGY</span></div>' +
+      '<div class="logo-sub" data-i18n="logo.sub">' + t('logo.sub') + '</div>' +
+    '</div>' +
+    '<nav class="site-nav">' +
+      navHtml +
+      '<div class="lang-toggle">' +
+        '<button class="lang-toggle-btn' + (lang === 'en' ? ' active' : '') + '" data-lang="en">EN</button>' +
+        '<button class="lang-toggle-btn' + (lang === 'es' ? ' active' : '') + '" data-lang="es">ES</button>' +
+      '</div>' +
+    '</nav>';
 
-  const placeholder = document.getElementById('site-header');
+  header.querySelectorAll('.lang-toggle-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      if (window.i18n) window.i18n.setLang(btn.dataset.lang);
+    });
+  });
+
+  var placeholder = document.getElementById('site-header');
   if (placeholder) placeholder.replaceWith(header);
 })();
