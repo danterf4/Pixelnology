@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blog — Pixelnology</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  .blog-page {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 0 1.5rem 6rem;
+  }
+
+  /* ── HERO ── */
+  .blog-hero {
+    padding: 3rem 0 2rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 2.5rem;
+  }
+  .blog-hero-title {
+    font-family: var(--mono);
+    font-size: clamp(36px, 6.5vw, 55px);
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -1px;
+    line-height: 1.1;
+    margin-bottom: 0.5rem;
+  }
+  .blog-hero-title span { color: var(--accent-light); }
+  .blog-hero-sub {
+    font-size: 20px;
+    color: var(--text-muted);
+  }
+
+  /* ── POST LIST ── */
+  .post-list { display: flex; flex-direction: column; gap: 1px; }
+
+  .post-card {
+    display: block;
+    padding: 1.5rem 0;
+    border-bottom: 1px solid var(--border);
+    text-decoration: none;
+    cursor: pointer;
+    transition: none;
+  }
+  .post-card:first-child { border-top: 1px solid var(--border); }
+  .post-card:hover .post-card-title { color: var(--accent-light); }
+
+  .post-card-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 0.5rem;
+  }
+  .post-card-date {
+    font-family: var(--mono);
+    font-size: 16px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+  .post-tag {
+    font-family: var(--mono);
+    font-size: 14px;
+    color: var(--accent-light);
+    background: var(--accent-bg);
+    border: 1px solid var(--accent);
+    border-radius: 20px;
+    padding: 1px 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .post-card-title {
+    font-family: var(--mono);
+    font-size: 29px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 0.4rem;
+    transition: color 0.15s;
+  }
+  .post-card-excerpt {
+    font-size: 20px;
+    color: var(--text-dim);
+    line-height: 1.65;
+  }
+
+  /* ── SINGLE POST ── */
+  .post-view { display: none; }
+  .post-view.active { display: block; }
+  .post-list-wrap.hidden { display: none; }
+
+  .back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--mono);
+    font-size: 16px;
+    color: var(--text-muted);
+    background: none;
+    border: none;
+    padding: 0.5rem 0;
+    cursor: pointer;
+    transition: color 0.15s;
+    margin-bottom: 2rem;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+  .back-btn:hover { color: var(--accent-light); }
+
+  .post-header { margin-bottom: 2rem; }
+  .post-title {
+    font-family: var(--mono);
+    font-size: clamp(31px, 5.2vw, 47px);
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.5px;
+    line-height: 1.15;
+    margin-bottom: 0.75rem;
+  }
+  .post-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .post-date {
+    font-family: var(--mono);
+    font-size: 16px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+
+  /* ── POST BODY ── */
+  .post-body {
+    font-size: 22px;
+    color: var(--text-dim);
+    line-height: 1.8;
+  }
+  .post-body p { margin-bottom: 1.25rem; }
+  .post-body p:last-child { margin-bottom: 0; }
+  .post-body h2 {
+    font-family: var(--mono);
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--text);
+    margin: 2rem 0 0.75rem;
+    letter-spacing: -0.3px;
+  }
+  .post-body h3 {
+    font-family: var(--mono);
+    font-size: 21px;
+    font-weight: 700;
+    color: var(--accent-light);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin: 1.5rem 0 0.5rem;
+  }
+  .post-body a { color: var(--accent-light); text-decoration: none; }
+  .post-body a:hover { text-decoration: underline; }
+  .post-body strong { color: var(--text); font-weight: 600; }
+  .post-body em { color: var(--text-dim); font-style: italic; }
+  .post-body blockquote {
+    border-left: 3px solid var(--accent);
+    padding-left: 1.25rem;
+    margin: 1.5rem 0;
+    color: var(--text-muted);
+    font-style: italic;
+  }
+  .post-body code {
+    font-family: var(--mono);
+    font-size: 18px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 6px;
+    color: var(--accent-light);
+  }
+  .post-body pre {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem 1.25rem;
+    overflow-x: auto;
+    margin: 1.5rem 0;
+  }
+  .post-body pre code {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 18px;
+    color: var(--text);
+  }
+
+  /* ── EMPTY STATE ── */
+  .blog-empty {
+    padding: 3rem 0;
+    color: var(--text-muted);
+    font-size: 20px;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+<div class="blog-page">
+
+  <!-- HEADER -->
+  <div id="site-header"></div>
+  <script src="header.js"></script>
+
+  <!-- POST LIST -->
+  <div class="post-list-wrap" id="post-list-wrap">
+    <div class="blog-hero">
+      <div class="blog-hero-title">Max's <span>Blog</span></div>
+      <div class="blog-hero-sub">Thoughts on games, building things, and everything else.</div>
+    </div>
+    <div class="post-list" id="post-list"></div>
+  </div>
+
+  <!-- SINGLE POST VIEW -->
+  <div class="post-view" id="post-view">
+    <button class="back-btn" id="back-btn">← All posts</button>
+    <div class="post-header">
+      <div class="post-title" id="post-title"></div>
+      <div class="post-meta">
+        <span class="post-date" id="post-date"></span>
+        <div id="post-tags"></div>
+      </div>
+    </div>
+    <div class="post-body" id="post-body"></div>
+  </div>
+
+  <!-- FOOTER -->
+  <div id="site-footer"></div>
+  <script src="footer.js"></script>
+
+</div>
+
+<script src="posts/index.js"></script>
+<script>
+  function formatDate(iso) {
+    const [y, m, d] = iso.split('-').map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString('en-US', {
+      month: 'long', day: 'numeric', year: 'numeric'
+    });
+  }
+
+  function showList() {
+    document.getElementById('post-list-wrap').classList.remove('hidden');
+    document.getElementById('post-view').classList.remove('active');
+    document.title = 'Blog — Pixelnology';
+    history.pushState(null, '', 'blog.html');
+  }
+
+  async function showPost(meta) {
+    document.getElementById('post-list-wrap').classList.add('hidden');
+
+    document.getElementById('post-title').textContent = meta.title;
+    document.getElementById('post-date').textContent = formatDate(meta.date);
+
+    const tagsEl = document.getElementById('post-tags');
+    tagsEl.innerHTML = (meta.tags || []).map(t => `<span class="post-tag">${t}</span>`).join('');
+
+    const bodyEl = document.getElementById('post-body');
+    bodyEl.innerHTML = '<p style="color:var(--text-muted)">Loading…</p>';
+
+    document.getElementById('post-view').classList.add('active');
+    document.title = `${meta.title} — Pixelnology`;
+    history.pushState({ postId: meta.id }, '', `blog.html#${meta.id}`);
+    window.scrollTo({ top: 0 });
+
+    try {
+      const res = await fetch(`posts/${meta.id}.html`);
+      if (!res.ok) throw new Error('Not found');
+      bodyEl.innerHTML = await res.text();
+    } catch (e) {
+      bodyEl.innerHTML = '<p style="color:var(--red)">Could not load post.</p>';
+    }
+  }
+
+  function renderList() {
+    const list = document.getElementById('post-list');
+    if (!POST_INDEX || POST_INDEX.length === 0) {
+      list.innerHTML = '<div class="blog-empty">No posts yet.</div>';
+      return;
+    }
+    list.innerHTML = '';
+    POST_INDEX.forEach(meta => {
+      const card = document.createElement('div');
+      card.className = 'post-card';
+      card.innerHTML = `
+        <div class="post-card-meta">
+          <span class="post-card-date">${formatDate(meta.date)}</span>
+          ${(meta.tags || []).map(t => `<span class="post-tag">${t}</span>`).join('')}
+        </div>
+        <div class="post-card-title">${meta.title}</div>
+        ${meta.excerpt ? `<div class="post-card-excerpt">${meta.excerpt}</div>` : ''}
+      `;
+      card.addEventListener('click', () => showPost(meta));
+      list.appendChild(card);
+    });
+  }
+
+  function route() {
+    const hash = window.location.hash.slice(1);
+    if (hash) {
+      const meta = POST_INDEX.find(p => p.id === hash);
+      if (meta) { showPost(meta); return; }
+    }
+    showList();
+  }
+
+  document.getElementById('back-btn').addEventListener('click', showList);
+  window.addEventListener('popstate', route);
+
+  renderList();
+  route();
+</script>
+</body>
+</html>

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>About — Pixelnology</title>
+<title>About — Pixology</title>
 <link rel="stylesheet" href="styles.css">
 <style>
   .about-page {
@@ -16,7 +16,7 @@
   }
   .about-section h2 {
     font-family: var(--mono);
-    font-size: 13px;
+    font-size: 17px;
     font-weight: 700;
     letter-spacing: 1.2px;
     text-transform: uppercase;
@@ -42,7 +42,7 @@
   }
   .about-hero-title {
     font-family: var(--mono);
-    font-size: clamp(28px, 5vw, 42px);
+    font-size: clamp(36px, 6.5vw, 55px);
     font-weight: 700;
     color: var(--text);
     letter-spacing: -1px;
@@ -54,7 +54,7 @@
   }
   .about-hero-sub {
     color: var(--text-dim);
-    font-size: 16px;
+    font-size: 21px;
     line-height: 1.65;
     max-width: 520px;
   }
@@ -67,13 +67,13 @@
   }
   .about-card-name {
     font-family: var(--mono);
-    font-size: 15px;
+    font-size: 20px;
     font-weight: 700;
     color: var(--text);
     margin-bottom: 0.25rem;
   }
   .about-card-role {
-    font-size: 12px;
+    font-size: 16px;
     color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.8px;
@@ -82,7 +82,7 @@
   }
   .about-card p {
     color: var(--text-dim);
-    font-size: 14px;
+    font-size: 18px;
     line-height: 1.65;
     margin-bottom: 0;
   }
@@ -102,7 +102,7 @@
     padding: 0.75rem 1.25rem;
     color: var(--text-dim);
     text-decoration: none;
-    font-size: 14px;
+    font-size: 18px;
     transition: border-color 0.15s, color 0.15s, background 0.15s;
   }
   .contact-link:hover {
@@ -112,7 +112,7 @@
   }
   .contact-link-label {
     font-family: var(--mono);
-    font-size: 11px;
+    font-size: 14px;
     color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.8px;
@@ -123,7 +123,7 @@
     align-items: center;
     gap: 6px;
     font-family: var(--mono);
-    font-size: 12px;
+    font-size: 16px;
     color: var(--text-muted);
     text-decoration: none;
     padding: 0.5rem 0;
@@ -136,24 +136,20 @@
 <div class="about-page">
 
   <!-- HEADER -->
-  <header class="site-header">
-    <a href="index.html" class="logo" style="text-decoration:none;">PIXEL<span>NOLOGY</span></a>
-    <div class="header-meta">
-      <a href="index.html" class="back-link">← Play today's puzzle</a>
-    </div>
-  </header>
+  <div id="site-header"></div>
+  <script src="header.js"></script>
 
   <!-- HERO -->
   <div class="about-hero">
-    <div class="about-hero-title">About<br><span>Pixelnology</span></div>
+    <div class="about-hero-title">About<br><span>Pixology</span></div>
     <p class="about-hero-sub">A daily game timeline puzzle — place video games in chronological order across three eras and see how well you know gaming history.</p>
   </div>
 
   <!-- WHAT IS IT -->
   <div class="about-section">
-    <h2>What is Pixelnology?</h2>
+    <h2>What is Pixology?</h2>
     <p>
-      Pixelnology is a <strong>daily browser puzzle</strong> inspired by the love of video game history.
+      Pixology is a <strong>daily browser puzzle</strong> inspired by the love of video game history.
       Each day a new set of 15 games is drawn from across gaming's timeline — from the early 80s
       all the way to the modern era.
     </p>
@@ -175,7 +171,7 @@
       <div class="about-card-name">Max</div>
       <div class="about-card-role">Creator &amp; Developer</div>
       <p>
-        Pixelnology is a personal project born from a curiosity about game history and a love of daily puzzle games.
+        Pixology is a personal project born from a curiosity about game history and a love of daily puzzle games.
         Built from scratch with vanilla HTML, CSS, and JavaScript — no frameworks, just code and a lot of game trivia.
       </p>
     </div>
@@ -194,10 +190,8 @@
   </div>
 
   <!-- FOOTER -->
-  <footer class="site-footer">
-    <img src="https://www.igdb.com/assets/logos/igdb_logo.png" alt="IGDB logo" onerror="this.style.display='none'">
-    <p>Game information provided by <a href="https://www.igdb.com" target="_blank" rel="noopener">IGDB</a></p>
-  </footer>
+  <div id="site-footer"></div>
+  <script src="footer.js"></script>
 
 </div>
 </body>

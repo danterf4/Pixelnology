@@ -80,6 +80,45 @@
     border-bottom: 1px solid var(--border);
     margin-bottom: 2rem;
   }
+
+  /* ── SITE NAV ── */
+  .site-nav {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex-wrap: wrap;
+  }
+  .site-nav-link {
+    font-family: var(--mono);
+    font-size: 15px;
+    color: var(--text-muted);
+    text-decoration: none;
+    padding: 5px 12px;
+    border-radius: var(--radius);
+    transition: color 0.15s, background 0.15s;
+    white-space: nowrap;
+  }
+  .site-nav-link:hover { color: var(--text); background: var(--surface2); }
+  .site-nav-link.active { color: var(--accent-light); background: var(--accent-bg); }
+
+  /* ── SIDEBAR DATE ROW ── */
+  .dock-meta-row {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+  .dock-meta-row .pill { font-size: 14px; }
+  .logo-wrap { display: flex; flex-direction: column; gap: 0; align-items: center; }
+  .logo-sub {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    text-align: center;
+    margin-top: -8px;
+  }
   .logo {
     font-family: var(--mono);
     font-size: 34px;
@@ -108,7 +147,7 @@
     padding: 10px 14px;
     font-size: 21px;
     color: var(--text-muted);
-    margin-bottom: 1.5rem;
+    margin-bottom: 0.75rem;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -321,16 +360,12 @@
     border: 1px solid var(--border);
   }
   .tl-section-wrap {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
-    padding: 0.5rem 1rem 0.75rem;
-    margin-bottom: 1.5rem;
     position: relative;
   }
-  .tl-section-wrap.complete {
-    border-color: var(--green);
-    background: rgba(34,199,122,0.04);
+  .tl-section-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 2px 0;
   }
 
   /* ── TIMELINE ── */
@@ -619,7 +654,7 @@
   .drag-over .tl-insert-btn { border-color: var(--accent); color: var(--accent-light); background: var(--accent-bg); }
 
   /* ── BOTTOM DOCK ── */
-  body {
+  body.has-sidebar {
     padding-bottom: 240px; /* reserve space so content isn't hidden behind dock */
   }
   .bottom-dock {
@@ -741,7 +776,8 @@
     .actions-row { flex-direction: column; }
     .btn { width: 100%; text-align: center; }
     .end-card { padding: 1.25rem; }
-    body { padding-bottom: 200px; }
+    body.has-sidebar { padding-bottom: 380px; }
+    body.has-sidebar .site-footer { margin-bottom: 300px; }
     .pool-card { width: 76px; }
     .pc-cover { height: 95px; }
 
@@ -785,7 +821,7 @@
 
   /* ── DESKTOP LEFT SIDEBAR DOCK ── */
   @media (min-width: 561px) {
-    body { padding-bottom: 0; padding-left: 310px; }
+    body.has-sidebar { padding-bottom: 0; padding-left: 310px; }
     .bottom-dock {
       top: 0;
       right: auto;
@@ -931,4 +967,13 @@
     content: '';
     position: fixed;
     inset: 0;
-    background: repeating-
+    pointer-events: none;
+    z-index: 9999;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 0, 0, 0.03) 2px,
+      rgba(0, 0, 0, 0.03) 4px
+    );
+  }

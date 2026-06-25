@@ -26,6 +26,43 @@ function getDailySeed() {
 }
 
 // ═══════════════════════════════════════════════════════
+// PERSISTENCE
+// ═══════════════════════════════════════════════════════
+const SAVE_KEY = 'pixelnology_state';
+
+function saveState() {
+  try {
+    localStorage.setItem(SAVE_KEY, JSON.stringify({
+      seed: getDailySeed(),
+      allGames,
+      sections,
+      checksUsed,
+      gameWon,
+      gameLost,
+      coverCache
+    }));
+  } catch (e) { /* storage full or unavailable */ }
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return false;
+    const s = JSON.parse(raw);
+    if (s.seed !== getDailySeed()) return false; // new day — start fresh
+    allGames   = s.allGames;
+    sections   = s.sections;
+    checksUsed = s.checksUsed;
+    gameWon    = s.gameWon;
+    gameLost   = s.gameLost;
+    Object.assign(coverCache, s.coverCache || {});
+    const anchorIds = new Set(sections.map(sec => sec.anchor.id));
+    poolGames = allGames.filter(g => !anchorIds.has(g.id));
+    return true;
+  } catch (e) { return false; }
+}
+
+// ═══════════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════════
 async function init() {
@@ -37,6 +74,18 @@ async function init() {
   document.getElementById('how-toggle').addEventListener('click', toggleHow);
   document.getElementById('check-btn').addEventListener('click', checkTimeline);
   document.getElementById('clear-btn').addEventListener('click', clearAll);
+
+  // Restore today's session if it exists
+  if (loadState()) {
+    render();
+    if (gameWon || gameLost) {
+      const dock = document.getElementById('bottom-dock');
+      if (dock) dock.style.display = 'none';
+      document.body.style.paddingBottom = '0';
+      showEndScreen();
+    }
+    return;
+  }
 
   document.getElementById('pool-grid').innerHTML =
     `<div style="color:var(--text-muted);font-size:13px;padding:8px;">Loading today's games…</div>`;
@@ -113,6 +162,7 @@ function render() {
   renderTimeline();
   renderStats();
   updateCheckBtn();
+  saveState();
 }
 
 function updateCardCovers(gameId) {
@@ -135,9 +185,10 @@ function renderPool() {
   sections.forEach(sec => sec.timeline.forEach(t => placedIds.add(t.game.id)));
 
   poolGames.forEach(g => {
-    const placed = placedIds.has(g.id);
+    if (placedIds.has(g.id)) return; // hide placed games from sidebar
+
     const div = document.createElement('div');
-    div.className = 'pool-card' + (placed ? ' placed' : '');
+    div.className = 'pool-card';
     div.dataset.id = g.id;
     div.title = g.t;
 
@@ -154,20 +205,13 @@ function renderPool() {
     body.className = 'pc-body';
     body.innerHTML = `<div class="pc-title">${g.t}</div>`;
 
-    const check = document.createElement('div');
-    check.className = 'pc-check';
-    check.textContent = '✓';
-
-    div.appendChild(check);
     div.appendChild(coverDiv);
     div.appendChild(body);
 
-    if (!placed) {
-      div.draggable = true;
-      div.addEventListener('dragstart', e => onDragStart(e, g, 'pool', null, null));
-      div.addEventListener('dragend', onDragEnd);
-      div.addEventListener('touchstart', e => onTouchStart(e, g, 'pool', null, null), { passive: false });
-    }
+    div.draggable = true;
+    div.addEventListener('dragstart', e => onDragStart(e, g, 'pool', null, null));
+    div.addEventListener('dragend', onDragEnd);
+    div.addEventListener('touchstart', e => onTouchStart(e, g, 'pool', null, null), { passive: false });
 
     // Click opens info popup (only if not a drag)
     div.addEventListener('click', e => {
@@ -183,29 +227,6 @@ function renderTimeline() {
   container.innerHTML = '';
 
   sections.forEach((sec, sIdx) => {
-    const header = document.createElement('div');
-    header.className = 'tl-section-header' + (sec.complete ? ' complete' : '');
-    const placed = sec.timeline.filter(t => !t.locked).length;
-    const total = SECTION_SIZE - 1;
-    const checked = sec.wrongCount !== undefined;
-    let rightHtml;
-    if (sec.complete) {
-      rightHtml = '<span class="tl-section-badge">✓ Complete</span>';
-    } else if (checked && sec.wrongCount === 0 && placed < total) {
-      rightHtml = `<span class="tl-section-status incomplete">${placed}/${total} placed</span>`;
-    } else if (checked && placed === total && sec.wrongCount > 0) {
-      rightHtml = `<span class="tl-section-status wrong">${sec.wrongCount} wrong</span>`;
-    } else if (checked && placed === total && sec.wrongCount === 0) {
-      rightHtml = `<span class="tl-section-status perfect">All correct!</span>`;
-    } else {
-      rightHtml = `<span class="tl-section-progress">${placed}/${total} placed</span>`;
-    }
-    header.innerHTML = `
-      <span class="tl-section-label">${sec.label}</span>
-      ${rightHtml}
-    `;
-    container.appendChild(header);
-
     const secWrap = document.createElement('div');
     secWrap.className = 'tl-section-wrap' + (sec.complete ? ' complete' : '');
     secWrap.dataset.section = sIdx;
@@ -219,6 +240,12 @@ function renderTimeline() {
     });
 
     container.appendChild(secWrap);
+
+    if (sIdx < sections.length - 1) {
+      const divider = document.createElement('div');
+      divider.className = 'tl-section-divider';
+      container.appendChild(divider);
+    }
   });
 }
 
@@ -397,6 +424,28 @@ function onDragEnd(e) {
   e.currentTarget.classList.remove('dragging');
 }
 
+function initPoolDropZone() {
+  const dock = document.getElementById('bottom-dock');
+  dock.addEventListener('dragover', e => {
+    if (dragState.source === 'timeline') e.preventDefault();
+  });
+  dock.addEventListener('drop', e => {
+    e.preventDefault();
+    returnGameToPool();
+  });
+}
+
+function returnGameToPool() {
+  if (dragState.source !== 'timeline' || dragState.sectionIdx === null) return;
+  const sec = sections[dragState.sectionIdx];
+  if (sec && !sec.complete) {
+    sec.timeline.splice(dragState.timelineIdx, 1);
+    delete sec.wrongCount;
+    dragState = {};
+    render();
+  }
+}
+
 // ═══════════════════════════════════════════════════════
 // DRAG — TOUCH
 // ═══════════════════════════════════════════════════════
@@ -465,6 +514,11 @@ function onTouchEnd(e) {
     const sIdx = parseInt(lastZone.dataset.sectionIdx, 10);
     const idx = parseInt(lastZone.dataset.insertIdx, 10);
     if (!isNaN(sIdx) && !isNaN(idx)) dropAt(sIdx, idx);
+  } else {
+    // Check if dropped onto the sidebar pool area
+    const touch = e.changedTouches[0];
+    const target = document.elementFromPoint(touch.clientX, touch.clientY);
+    if (target && target.closest('#bottom-dock')) returnGameToPool();
   }
   touchState = {};
 }
@@ -477,7 +531,7 @@ function renderStats() {
   const remaining = poolGames.length - placed;
   document.getElementById('stat-placed').textContent = placed;
   document.getElementById('stat-remaining').textContent = remaining;
-  document.getElementById('stat-checks').textContent = checksUsed;
+  document.getElementById('stat-checks').textContent = MAX_CHECKS - checksUsed;
   const pct = (placed / poolGames.length) * 100;
   document.getElementById('progress-fill').style.width = pct + '%';
   const dockCount = document.getElementById('dock-count');
@@ -613,12 +667,7 @@ function showEndScreen() {
         </div>
       </div>`;
     }).join('');
-    const headerColor = sec.complete ? 'var(--green)' : (sec.revealed ? 'var(--red)' : 'var(--accent-light)');
-    const headerSuffix = sec.complete ? ' ✓' : (sec.revealed ? ' — solution shown' : '');
-    return `<div style="margin-bottom:1rem">
-      <div style="font-size:11px;font-family:var(--mono);color:${headerColor};text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px">${sec.label}${headerSuffix}</div>
-      ${rows}
-    </div>`;
+    return `<div style="margin-bottom:1rem">${rows}</div>`;
   }).join('');
 
   const subLine = gameLost
@@ -633,7 +682,6 @@ function showEndScreen() {
       <div class="end-breakdown">${breakdown}</div>
       <div class="share-row">
         <button class="btn btn-primary" onclick="copyShare()">Share result</button>
-        <button class="btn" onclick="window.location.reload()">Play again (new seed)</button>
       </div>
       <div class="copy-confirm" id="copy-confirm"></div>
     </div>`;
@@ -649,7 +697,7 @@ function copyShare() {
   const result = gameLost
     ? `Out of attempts — ${completedCount}/3 sections correct`
     : `${checksUsed} check${checksUsed !== 1 ? 's' : ''} used`;
-  const text = `Pixelnology — ${dateStr}\n${stars}\n${result}\n\nCan you beat my score?`;
+  const text = `Pixology — ${dateStr}\n${stars}\n${result}\n\nCan you beat my score?`;
   navigator.clipboard.writeText(text).then(() => {
     const el = document.getElementById('copy-confirm');
     if (el) { el.textContent = 'Copied to clipboard!'; setTimeout(() => { el.textContent = ''; }, 2500); }
@@ -749,6 +797,7 @@ function initDockArrows() {
 }
 
 document.addEventListener('DOMContentLoaded', initDockArrows);
+document.addEventListener('DOMContentLoaded', initPoolDropZone);
 init().catch(err => {
   console.error('Init failed:', err);
   document.getElementById('pool-grid').innerHTML =

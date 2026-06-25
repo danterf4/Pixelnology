@@ -3,26 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pixelnology — Daily Game Timeline</title>
+<title>Pixology — Daily Game Timeline</title>
 <link rel="stylesheet" href="styles.css">
 </head>
-<body>
+<body class="has-sidebar">
 <div class="page">
 
   <!-- HEADER -->
-  <header class="site-header">
-    <div class="logo">PIXEL<span>NOLOGY</span></div>
-    <div class="header-meta">
-      <div class="pill accent" id="date-pill"></div>
-      <div class="pill" id="puzzle-pill"></div>
-    </div>
-  </header>
-
-  <!-- HOW TO PLAY -->
-  <div class="how-bar" id="how-toggle">
-    <span class="how-icon"></span>
-    <span>How to play</span>
-  </div>
+  <div id="site-header"></div>
+  <script src="header.js"></script>
 
   <!-- HOW TO PLAY MODAL -->
   <div class="how-overlay" id="how-overlay">
@@ -32,12 +21,12 @@
         <button class="how-close" id="how-close">✕</button>
       </div>
       <ol>
-        <li>The timeline is split into <strong>3 eras</strong> — Early, Mid, and Modern. Each era has its own anchor game pre-placed.</li>
-        <li><strong>Drag games</strong> from the pool at the bottom into the correct era's timeline slot. On mobile, press and hold to drag.</li>
-        <li>Place all 6 games in an era before hitting <strong>Check Timeline</strong>.</li>
-        <li>If an entire era is in the right order, it <strong>locks and turns green</strong> — those games are done!</li>
-        <li>Fix wrong games in incomplete eras and check again.</li>
-        <li>Years are revealed only when an era is <strong>fully correct</strong>!</li>
+        <li>The timeline has <strong>3 anchor games</strong> pre-placed. They divide the timeline into sections — oldest at the top, newest at the bottom.</li>
+        <li><strong>Drag games</strong> from the pool into the right spot on the timeline. On mobile, press and hold to drag.</li>
+        <li>Place all games in a section before hitting <strong>Check Timeline</strong>.</li>
+        <li>If a section is in the right order, it <strong>locks and turns green</strong> — those games are done!</li>
+        <li>Fix wrong games in incomplete sections and check again.</li>
+        <li>Years are revealed only when a section is <strong>fully correct</strong>!</li>
       </ol>
     </div>
   </div>
@@ -45,16 +34,16 @@
   <!-- STATS -->
   <div class="stats-row">
     <div class="stat-card">
+      <div class="stat-val" id="stat-checks">3</div>
+      <div class="stat-lbl">Attempts left</div>
+    </div>
+    <div class="stat-card">
       <div class="stat-val" id="stat-placed">0</div>
-      <div class="stat-lbl">Placed</div>
+      <div class="stat-lbl">Games placed</div>
     </div>
     <div class="stat-card">
       <div class="stat-val" id="stat-remaining">—</div>
-      <div class="stat-lbl">Remaining</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-val" id="stat-checks">0</div>
-      <div class="stat-lbl">Checks used</div>
+      <div class="stat-lbl">Games left</div>
     </div>
   </div>
 
@@ -71,7 +60,7 @@
 
     <!-- 80%: Timeline -->
     <div class="timeline-area">
-      <div class="section-label" style="margin-bottom:14px;">Timeline — 3 eras, oldest at top, newest at bottom</div>
+      <div class="section-label" style="margin-bottom:14px;">Timeline — oldest at top, newest at bottom</div>
       <div class="timeline-track">
         <div class="tl-spine" id="tl-spine"></div>
         <div class="tl-items" id="tl-items"></div>
@@ -89,6 +78,9 @@
   <!-- END SCREEN -->
   <div id="end-screen"></div>
 
+  <div id="site-footer"></div>
+  <script src="footer.js"></script>
+
 </div>
 
 <!-- GAME INFO POPUP -->
@@ -103,9 +95,17 @@
 <!-- FIXED BOTTOM DOCK (left sidebar on desktop) -->
 <div class="bottom-dock" id="bottom-dock">
   <div class="dock-inner">
+    <div class="dock-meta-row">
+      <div class="pill accent" id="date-pill"></div>
+      <div class="pill" id="puzzle-pill"></div>
+    </div>
     <div class="dock-header">
       <span class="dock-label">Game pool — drag onto the timeline</span>
       <span class="dock-count" id="dock-count">— remaining</span>
+    </div>
+    <div class="how-bar" id="how-toggle">
+      <span class="how-icon"></span>
+      <span>How to play</span>
     </div>
     <div class="dock-scroll-wrap">
       <button class="dock-arrow hidden" id="dock-arrow-left" aria-label="Scroll left">‹</button>
@@ -116,11 +116,6 @@
     </div>
   </div>
 </div>
-
-<footer class="site-footer">
-  <img src="https://www.igdb.com/assets/logos/igdb_logo.png" alt="IGDB logo" onerror="this.style.display='none'">
-  <p>Game information provided by <a href="https://www.igdb.com" target="_blank" rel="noopener">IGDB</a> &nbsp;·&nbsp; <a href="about.html">About</a></p>
-</footer>
 
 <script src="script.js"></script>
 </body>
