@@ -15,7 +15,7 @@ const POSTS = [
     title: 'Hello, world',
     date: '2026-06-24',
     tags: ['personal'],
-    excerpt: 'First post. A few words on why I built Pixelnology and what this space is for.',
+    excerpt: 'First post. A few words on why I built Pixology and what this space is for.',
     content: `
       <p>
         I've been meaning to start writing for a while. Not because I have anything particularly
@@ -23,7 +23,7 @@ const POSTS = [
         at least to me.
       </p>
       <p>
-        Pixelnology started as a weekend experiment. I wanted to see if I could build a daily puzzle
+        Pixology started as a weekend experiment. I wanted to see if I could build a daily puzzle
         game from scratch — no frameworks, just HTML, CSS, and JavaScript. It turned into something
         I actually wanted to share, which surprised me.
       </p>
@@ -32,7 +32,7 @@ const POSTS = [
         games I'm playing, ideas that don't fit anywhere else. No schedule, no theme. Just writing.
       </p>
       <p>
-        If you found this through Pixelnology — thanks for playing. Come back tomorrow.
+        If you found this through Pixology — thanks for playing. Come back tomorrow.
       </p>
     `
   }

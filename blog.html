@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Blog — Pixelnology</title>
+<title>Blog — Pixology</title>
 <link rel="stylesheet" href="styles.css">
 <script src="i18n.js"></script>
 <style>
@@ -263,7 +263,7 @@
     currentMeta = null;
     document.getElementById('post-list-wrap').classList.remove('hidden');
     document.getElementById('post-view').classList.remove('active');
-    document.title = 'Blog — Pixelnology';
+    document.title = 'Blog — Pixology';
     history.pushState(null, '', 'blog.html');
   }
 
@@ -282,7 +282,7 @@
     bodyEl.innerHTML = `<p style="color:var(--text-muted)">${window.i18n ? window.i18n.t('blog.loading') : 'Loading…'}</p>`;
 
     document.getElementById('post-view').classList.add('active');
-    document.title = `${title} — Pixelnology`;
+    document.title = `${title} — Pixology`;
     history.pushState({ postId: meta.id }, '', `blog.html#${meta.id}`);
     window.scrollTo({ top: 0 });
 
