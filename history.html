@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>History — Pixology</title>
+<script>window.location.replace('index.html?view=history');</script>
+<link rel="stylesheet" href="styles.css">
+<script src="i18n.js"></script>
+<style>
+  .history-page {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 0 1.5rem 4rem;
+  }
+
+  .history-hero {
+    padding: 3rem 0 2.5rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 2.5rem;
+  }
+  .history-hero-title {
+    font-family: var(--mono);
+    font-size: clamp(36px, 6.5vw, 55px);
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -1px;
+    line-height: 1.1;
+    margin-bottom: 0.75rem;
+  }
+  .history-hero-title span { color: var(--accent-light); }
+  .history-hero-sub {
+    color: var(--text-dim);
+    font-size: 18px;
+    line-height: 1.6;
+  }
+
+  /* Summary bar */
+  .history-summary {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+  }
+  .hs-card {
+    background: var(--surface);
+    border: 1px solid var(--border-md);
+    border-radius: var(--radius);
+    padding: 0.75rem 1.25rem;
+    text-align: center;
+    min-width: 80px;
+    flex: 1;
+  }
+  .hs-val {
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .hs-lbl {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-top: 2px;
+    font-family: var(--mono);
+  }
+
+  /* Entry list */
+  .history-list { display: flex; flex-direction: column; gap: 10px; }
+
+  .history-entry {
+    background: var(--surface);
+    border: 1px solid var(--border-md);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: border-color 0.15s;
+  }
+  .history-entry.unplayed { opacity: 0.75; }
+  .history-entry.unplayed:hover { opacity: 1; border-color: var(--accent); }
+  .history-entry.played:hover { border-color: var(--accent); }
+
+  .he-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 0.85rem 1.25rem;
+    text-decoration: none;
+    color: inherit;
+  }
+  .he-header.expandable { cursor: pointer; user-select: none; }
+
+  .he-emoji { font-size: 22px; flex-shrink: 0; line-height: 1; }
+
+  .he-info { flex: 1; min-width: 0; }
+  .he-date {
+    font-family: var(--mono);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .he-sub {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  .he-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+
+  .he-stars { font-size: 18px; letter-spacing: 2px; }
+
+  .he-play-btn {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--accent-light);
+    background: var(--accent-bg);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius);
+    padding: 4px 10px;
+    text-decoration: none;
+    transition: background 0.15s, color 0.15s;
+  }
+  .he-play-btn:hover { background: var(--accent); color: #fff; }
+
+  .he-chevron { font-size: 14px; color: var(--text-muted); transition: transform 0.2s; }
+  .he-header.open .he-chevron { transform: rotate(90deg); }
+
+  .he-today-badge {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    background: var(--accent);
+    color: #fff;
+    border-radius: 4px;
+    padding: 2px 6px;
+    vertical-align: middle;
+    margin-left: 6px;
+  }
+
+  /* Breakdown */
+  .he-body { display: none; border-top: 1px solid var(--border); padding: 1rem 1.25rem; }
+  .he-body.open { display: block; }
+
+  .he-section { margin-bottom: 1rem; }
+  .he-section:last-child { margin-bottom: 0; }
+  .he-section-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+  .he-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--border);
+    gap: 8px;
+  }
+  .he-row:last-child { border-bottom: none; }
+  .he-row-title {
+    font-size: 13px;
+    color: var(--text-dim);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+    min-width: 0;
+  }
+  .he-row-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .he-row-year { font-family: var(--mono); font-size: 13px; color: var(--text-muted); }
+  .he-row-icon { font-size: 13px; }
+  .he-row.anchor .he-row-title { color: var(--text); font-weight: 600; }
+  .he-row.anchor .he-row-year { color: var(--amber); }
+  .he-row.correct .he-row-icon { color: var(--green); }
+  .he-row.wrong .he-row-icon { color: var(--red); }
+</style>
+</head>
+<body>
+<div class="history-page">
+
+  <div id="site-header"></div>
+  <script src="header.js"></script>
+
+  <div class="history-hero">
+    <div class="history-hero-title">Puzzle <span>Archive</span></div>
+    <p class="history-hero-sub">Every daily puzzle since launch — play any one you missed, or review your past scores.</p>
+  </div>
+
+  <div id="history-root"></div>
+
+  <div id="site-footer"></div>
+  <script src="footer.js"></script>
+
+</div>
+<script>
+(function () {
+  const LAUNCH_DATE = '2026-06-20';
+  const SECTION_LABELS = ['Early Era', 'Mid Era', 'Modern Era'];
+
+  function getTodayStr() {
+    const d = new Date();
+    return d.getFullYear() + '-' +
+      String(d.getMonth() + 1).padStart(2, '0') + '-' +
+      String(d.getDate()).padStart(2, '0');
+  }
+
+  function getAllDates() {
+    const dates = [];
+    const today = getTodayStr();
+    let cur = new Date(LAUNCH_DATE + 'T12:00:00');
+    const end = new Date(today + 'T12:00:00');
+    while (cur <= end) {
+      dates.push(
+        cur.getFullYear() + '-' +
+        String(cur.getMonth() + 1).padStart(2, '0') + '-' +
+        String(cur.getDate()).padStart(2, '0')
+      );
+      cur.setDate(cur.getDate() + 1);
+    }
+    return dates.reverse(); // newest first
+  }
+
+  function formatDate(iso) {
+    const [y, m, d] = iso.split('-').map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString('en-US', {
+      weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
+    });
+  }
+
+  // Results store: { 'YYYY-MM-DD': { stars, checksUsed, gameLost, completedCount } }
+  function getResults() {
+    try { return JSON.parse(localStorage.getItem('pixelnology_results') || '{}'); } catch (e) { return {}; }
+  }
+
+  // Full game state — only needed for the breakdown panel
+  function getFullState(dateStr) {
+    try {
+      const raw = localStorage.getItem('pixelnology_state_' + dateStr);
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) { return null; }
+  }
+
+  function render() {
+    const root    = document.getElementById('history-root');
+    const today   = getTodayStr();
+    const dates   = getAllDates();
+    const results = getResults();
+    console.log('[History] pixelnology_results:', results);
+
+    // Summary stats — read from the lightweight results store
+    const finished  = Object.values(results);
+    const total     = dates.length;
+    const played    = finished.length;
+    const wins      = finished.filter(r => !r.gameLost).length;
+    const winPct    = played ? Math.round((wins / played) * 100) + '%' : '—';
+    const perfect   = finished.filter(r => !r.gameLost && r.checksUsed === 1).length;
+    const avgChecks = played
+      ? (finished.reduce((acc, r) => acc + (r.checksUsed || 0), 0) / played).toFixed(1)
+      : '—';
+
+    const summaryHtml = `
+      <div class="history-summary">
+        <div class="hs-card"><div class="hs-val">${total}</div><div class="hs-lbl">Total</div></div>
+        <div class="hs-card"><div class="hs-val">${played}</div><div class="hs-lbl">Played</div></div>
+        <div class="hs-card"><div class="hs-val">${winPct}</div><div class="hs-lbl">Win rate</div></div>
+        <div class="hs-card"><div class="hs-val">${perfect}</div><div class="hs-lbl">Perfect</div></div>
+        <div class="hs-card"><div class="hs-val">${avgChecks}</div><div class="hs-lbl">Avg checks</div></div>
+      </div>`;
+
+    const entriesHtml = dates.map((dateStr, idx) => {
+      const isToday    = dateStr === today;
+      const todayBadge = isToday ? '<span class="he-today-badge">Today</span>' : '';
+
+      // Fallback: if no result entry, check full state for completion
+      if (!results[dateStr]) {
+        try {
+          const fs = JSON.parse(localStorage.getItem('pixelnology_state_' + dateStr) || 'null');
+          if (fs && (fs.gameWon || fs.gameLost || (fs.sections && fs.sections.every(s => s.complete)))) {
+            const cc = (fs.sections || []).filter(s => s.complete).length;
+            const st = fs.gameLost
+              ? (cc === 0 ? '☆☆☆' : cc === 1 ? '★☆☆' : '★★☆')
+              : (fs.checksUsed === 1 ? '★★★' : fs.checksUsed === 2 ? '★★☆' : '★☆☆');
+            results[dateStr] = { stars: st, checksUsed: fs.checksUsed, gameLost: fs.gameLost, completedCount: cc };
+          }
+        } catch (e) {}
+      }
+      const result = results[dateStr];
+
+      if (result) {
+        // Played and finished — show score + collapsible breakdown
+        const { stars, checksUsed, gameLost, completedCount } = result;
+        const emoji   = gameLost ? '💀' : (checksUsed === 1 ? '🏆' : checksUsed <= 2 ? '⭐' : '🕹️');
+        const subLine = gameLost
+          ? `Out of attempts · ${completedCount}/3 sections correct`
+          : `${checksUsed} check${checksUsed !== 1 ? 's' : ''} used · ${completedCount}/3 sections`;
+
+        // Build detailed breakdown from full state if available
+        let sectionsHtml = '';
+        const state = getFullState(dateStr);
+        if (state && state.sections) {
+          const anchorIds = new Set(state.sections.map(s => s.anchor && s.anchor.id));
+          sectionsHtml = state.sections.map((sec, sIdx) => {
+            const tl = sec.revealed
+              ? [...sec.timeline].sort((a, b) => a.game.y - b.game.y)
+              : sec.timeline;
+            const rowsHtml = tl.map(e => {
+              const isAnchor = anchorIds.has(e.game.id);
+              const cls  = isAnchor ? 'anchor' : (sec.complete || e.correct ? 'correct' : 'wrong');
+              const icon = isAnchor ? '★' : (sec.complete || e.correct ? '✓' : '✗');
+              return `<div class="he-row ${cls}">
+                <div class="he-row-title">${e.game.t}</div>
+                <div class="he-row-right">
+                  <div class="he-row-year">${e.game.y}</div>
+                  <div class="he-row-icon">${icon}</div>
+                </div>
+              </div>`;
+            }).join('');
+            return `<div class="he-section">
+              <div class="he-section-label">${SECTION_LABELS[sIdx] || 'Section ' + (sIdx + 1)}</div>
+              ${rowsHtml}
+            </div>`;
+          }).join('');
+        }
+
+        return `
+          <div class="history-entry played">
+            <div class="he-header expandable" data-idx="${idx}">
+              <div class="he-emoji">${emoji}</div>
+              <div class="he-info">
+                <div class="he-date">${formatDate(dateStr)}${todayBadge}</div>
+                <div class="he-sub">${subLine}</div>
+              </div>
+              <div class="he-right">
+                <div class="he-stars">${stars}</div>
+                ${sectionsHtml ? '<div class="he-chevron">›</div>' : ''}
+              </div>
+            </div>
+            ${sectionsHtml ? `<div class="he-body" id="he-body-${idx}">${sectionsHtml}</div>` : ''}
+          </div>`;
+
+      } else {
+        // Not finished — check full state for in-progress
+        const state      = getFullState(dateStr);
+        const inProgress = state && !state.gameWon && !state.gameLost;
+        const placed     = inProgress
+          ? (state.sections || []).reduce((n, s) => n + s.timeline.filter(t => !t.locked).length, 0)
+          : 0;
+        const subLine  = inProgress ? `In progress · ${placed} game${placed !== 1 ? 's' : ''} placed` : 'Not played yet';
+        const emoji    = inProgress ? '⏳' : '🎮';
+        const href     = isToday ? 'index.html' : `index.html?date=${dateStr}`;
+        const btnLabel = isToday ? 'Play today' : (inProgress ? 'Continue' : 'Play');
+
+        return `
+          <div class="history-entry unplayed">
+            <a class="he-header" href="${href}">
+              <div class="he-emoji">${emoji}</div>
+              <div class="he-info">
+                <div class="he-date">${formatDate(dateStr)}${todayBadge}</div>
+                <div class="he-sub">${subLine}</div>
+              </div>
+              <div class="he-right">
+                <span class="he-play-btn">${btnLabel} →</span>
+              </div>
+            </a>
+          </div>`;
+      }
+    }).join('');
+
+    root.innerHTML = summaryHtml + `<div class="history-list">${entriesHtml}</div>`;
+
+    // Expand/collapse for played entries
+    root.querySelectorAll('.he-header.expandable').forEach(hdr => {
+      hdr.addEventListener('click', () => {
+        const idx  = hdr.dataset.idx;
+        const body = document.getElementById('he-body-' + idx);
+        const open = body.classList.toggle('open');
+        hdr.classList.toggle('open', open);
+      });
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', render);
+})();
+</script>
+</body>
+</html>

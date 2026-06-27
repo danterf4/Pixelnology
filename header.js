@@ -1,16 +1,19 @@
 (function () {
   var file = window.location.pathname.split('/').pop() || 'index.html';
+  var isHistoryView = window.location.search.indexOf('view=history') !== -1;
+  var current = (file === 'index.html' && isHistoryView) ? 'index.html?view=history' : file;
   var t = function (key) { return window.i18n ? window.i18n.t(key) : key; };
   var lang = window.i18n ? window.i18n.lang : 'en';
 
   var NAV = [
-    { href: 'index.html', key: 'nav.daily' },
-    { href: 'blog.html',  key: 'nav.blog'  },
-    { href: 'about.html', key: 'nav.about' }
+    { href: 'index.html',              key: 'nav.daily'   },
+    { href: 'index.html?view=history', key: 'nav.history' },
+    { href: 'blog.html',               key: 'nav.blog'    },
+    { href: 'about.html',              key: 'nav.about'   }
   ];
 
   var navHtml = NAV.map(function (p) {
-    var active = file === p.href ? ' active' : '';
+    var active = current === p.href ? ' active' : '';
     return '<a href="' + p.href + '" class="site-nav-link' + active + '" data-i18n="' + p.key + '">' + t(p.key) + '</a>';
   }).join('');
 

@@ -3,6 +3,7 @@
     en: {
       'logo.sub':       'Video Game Timeline',
       'nav.daily':      'Daily Challenge',
+      'nav.history':    'History',
       'nav.blog':       'Blog',
       'nav.about':      'About',
       'footer.credit':  'Game information provided by',
@@ -25,6 +26,7 @@
       'btn.clear':      'Clear all',
       'how.bar':        'How to play',
       'dock.label':     'Game pool — drag onto the timeline',
+      'past.banner':    'You\'re playing a past puzzle &nbsp;·&nbsp; <a href="index.html">Today\'s puzzle →</a>',
 
       // Blog
       'blog.hero.title': "Max's <span>Blog</span>",
@@ -51,6 +53,7 @@
     es: {
       'logo.sub':       'Línea de Tiempo de Videojuegos',
       'nav.daily':      'Reto Diario',
+      'nav.history':    'Historial',
       'nav.blog':       'Blog',
       'nav.about':      'Acerca de',
       'footer.credit':  'Información de juegos proporcionada por',
@@ -73,6 +76,7 @@
       'btn.clear':      'Limpiar todo',
       'how.bar':        'Cómo jugar',
       'dock.label':     'Juegos disponibles — arrastra a la línea de tiempo',
+      'past.banner':    'Estás jugando un puzzle pasado &nbsp;·&nbsp; <a href="index.html">Puzzle de hoy →</a>',
 
       // Blog
       'blog.hero.title': 'Blog <span>de Max</span>',

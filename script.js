@@ -3,6 +3,30 @@
 // ═══════════════════════════════════════════════════════
 const WORKER_URL = 'https://autumn-wave-6693.max-andres-rf.workers.dev';
 const DAILY_COUNT = 15;
+const LAUNCH_DATE = '2026-06-20';
+
+// ═══════════════════════════════════════════════════════
+// DATE HELPERS
+// ═══════════════════════════════════════════════════════
+function getTodayStr() {
+  const d = new Date();
+  return d.getFullYear() + '-' +
+    String(d.getMonth() + 1).padStart(2, '0') + '-' +
+    String(d.getDate()).padStart(2, '0');
+}
+
+function getActiveDateStr() {
+  const params = new URLSearchParams(window.location.search);
+  const d = params.get('date');
+  if (d && d >= LAUNCH_DATE && d <= getTodayStr()) return d;
+  return getTodayStr();
+}
+
+function getDailySeed(dateStr) {
+  const s = dateStr || getActiveDateStr();
+  const [y, m, day] = s.split('-').map(Number);
+  return (y * 10000 + m * 100 + day) * 7 + 13;
+}
 
 // ═══════════════════════════════════════════════════════
 // STATE
@@ -20,20 +44,35 @@ const NUM_SECTIONS = 3;
 const MAX_CHECKS = 3;
 const SECTION_LABELS = ['Early Era', 'Mid Era', 'Modern Era'];
 
-function getDailySeed() {
-  const d = new Date();
-  return (d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate()) * 7 + 13;
-}
-
 // ═══════════════════════════════════════════════════════
 // PERSISTENCE
 // ═══════════════════════════════════════════════════════
-const SAVE_KEY = 'pixelnology_state';
+function getSaveKey() {
+  return 'pixelnology_state_' + getActiveDateStr();
+}
+
+// Lightweight results store — one entry per completed date, read by history.html
+const RESULTS_KEY = 'pixelnology_results';
+
+function saveResult() {
+  try {
+    const completedCount = sections.filter(s => s.complete).length;
+    const stars = gameLost
+      ? (completedCount === 0 ? '☆☆☆' : completedCount === 1 ? '★☆☆' : '★★☆')
+      : (checksUsed === 1 ? '★★★' : checksUsed === 2 ? '★★☆' : '★☆☆');
+    const results = JSON.parse(localStorage.getItem(RESULTS_KEY) || '{}');
+    results[getActiveDateStr()] = { stars, checksUsed, gameLost, completedCount };
+    localStorage.setItem(RESULTS_KEY, JSON.stringify(results));
+    console.log('[Pixelnology] saveResult OK:', getActiveDateStr(), results[getActiveDateStr()]);
+  } catch (e) {
+    console.error('[Pixelnology] saveResult FAILED:', e);
+  }
+}
 
 function saveState() {
   try {
-    localStorage.setItem(SAVE_KEY, JSON.stringify({
-      seed: getDailySeed(),
+    localStorage.setItem(getSaveKey(), JSON.stringify({
+      date: getActiveDateStr(),
       allGames,
       sections,
       checksUsed,
@@ -46,10 +85,24 @@ function saveState() {
 
 function loadState() {
   try {
-    const raw = localStorage.getItem(SAVE_KEY);
+    // One-time migration: move old single-key state to per-date key if it matches today
+    const oldKey = 'pixelnology_state';
+    const oldRaw = localStorage.getItem(oldKey);
+    if (oldRaw && getActiveDateStr() === getTodayStr()) {
+      try {
+        const old = JSON.parse(oldRaw);
+        if (old.seed === getDailySeed() && !localStorage.getItem(getSaveKey())) {
+          old.date = getTodayStr();
+          localStorage.setItem(getSaveKey(), JSON.stringify(old));
+        }
+      } catch (e) {}
+      localStorage.removeItem(oldKey);
+    }
+
+    const raw = localStorage.getItem(getSaveKey());
     if (!raw) return false;
     const s = JSON.parse(raw);
-    if (s.seed !== getDailySeed()) return false; // new day — start fresh
+    if (s.date !== getActiveDateStr()) return false;
     allGames   = s.allGames;
     sections   = s.sections;
     checksUsed = s.checksUsed;
@@ -63,13 +116,170 @@ function loadState() {
 }
 
 // ═══════════════════════════════════════════════════════
+// HISTORY VIEW
+// ═══════════════════════════════════════════════════════
+function renderHistoryView() {
+  document.title = 'Puzzle Archive — Pixology';
+  document.body.classList.remove('has-sidebar');
+  document.getElementById('game-view').style.display = 'none';
+  document.getElementById('history-view').style.display = 'block';
+  document.getElementById('bottom-dock').style.display = 'none';
+  document.body.style.paddingBottom = '0';
+
+  const HL = ['Early Era', 'Mid Era', 'Modern Era'];
+
+  function hGetResults() {
+    try { return JSON.parse(localStorage.getItem(RESULTS_KEY) || '{}'); } catch (e) { return {}; }
+  }
+  function hGetFullState(dateStr) {
+    try { const r = localStorage.getItem('pixelnology_state_' + dateStr); return r ? JSON.parse(r) : null; } catch (e) { return null; }
+  }
+  function hGetAllDates() {
+    const dates = [], today = getTodayStr();
+    let cur = new Date(LAUNCH_DATE + 'T12:00:00');
+    const end = new Date(today + 'T12:00:00');
+    while (cur <= end) {
+      dates.push(cur.getFullYear() + '-' + String(cur.getMonth()+1).padStart(2,'0') + '-' + String(cur.getDate()).padStart(2,'0'));
+      cur.setDate(cur.getDate() + 1);
+    }
+    return dates.reverse();
+  }
+  function hFmtDate(iso) {
+    const [y, m, d] = iso.split('-').map(Number);
+    return new Date(y, m-1, d).toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric', year:'numeric' });
+  }
+
+  const root    = document.getElementById('history-root');
+  const today   = getTodayStr();
+  const dates   = hGetAllDates();
+  const results = hGetResults();
+
+  const finished   = Object.values(results);
+  const total      = dates.length;
+  const played     = finished.length;
+  const wins       = finished.filter(r => !r.gameLost).length;
+  const winPct     = played ? Math.round((wins / played) * 100) + '%' : '—';
+  const perfect    = finished.filter(r => !r.gameLost && r.checksUsed === 1).length;
+  const avgChecks  = played ? (finished.reduce((a, r) => a + (r.checksUsed||0), 0) / played).toFixed(1) : '—';
+
+  const summaryHtml = `<div class="history-summary">
+    <div class="hs-card"><div class="hs-val">${total}</div><div class="hs-lbl">Total</div></div>
+    <div class="hs-card"><div class="hs-val">${played}</div><div class="hs-lbl">Played</div></div>
+    <div class="hs-card"><div class="hs-val">${winPct}</div><div class="hs-lbl">Win rate</div></div>
+    <div class="hs-card"><div class="hs-val">${perfect}</div><div class="hs-lbl">Perfect</div></div>
+    <div class="hs-card"><div class="hs-val">${avgChecks}</div><div class="hs-lbl">Avg checks</div></div>
+  </div>`;
+
+  const entriesHtml = dates.map((dateStr, idx) => {
+    const isToday    = dateStr === today;
+    const todayBadge = isToday ? '<span class="he-today-badge">Today</span>' : '';
+
+    if (!results[dateStr]) {
+      try {
+        const fs = JSON.parse(localStorage.getItem('pixelnology_state_' + dateStr) || 'null');
+        if (fs && (fs.gameWon || fs.gameLost || (fs.sections && fs.sections.every(s => s.complete)))) {
+          const cc = (fs.sections||[]).filter(s => s.complete).length;
+          const st = fs.gameLost
+            ? (cc===0?'☆☆☆':cc===1?'★☆☆':'★★☆')
+            : (fs.checksUsed===1?'★★★':fs.checksUsed===2?'★★☆':'★☆☆');
+          results[dateStr] = { stars:st, checksUsed:fs.checksUsed, gameLost:fs.gameLost, completedCount:cc };
+        }
+      } catch(e) {}
+    }
+    const result = results[dateStr];
+
+    if (result) {
+      const { stars, checksUsed: cu, gameLost: gl, completedCount: cc } = result;
+      const emoji   = gl ? '💀' : (cu===1?'🏆':cu<=2?'⭐':'🕹️');
+      const subLine = gl
+        ? `Out of attempts · ${cc}/3 sections correct`
+        : `${cu} check${cu!==1?'s':''} used · ${cc}/3 sections`;
+
+      let sectionsHtml = '';
+      const state = hGetFullState(dateStr);
+      if (state && state.sections) {
+        const aIds = new Set(state.sections.map(s => s.anchor && s.anchor.id));
+        sectionsHtml = state.sections.map((sec, si) => {
+          const tl = sec.revealed ? [...sec.timeline].sort((a,b)=>a.game.y-b.game.y) : sec.timeline;
+          const rows = tl.map(e => {
+            const isA = aIds.has(e.game.id);
+            // completed sections: user solved it (all ✓)
+            // revealed (lost) sections: use userCorrect saved before sort; fall back to e.correct
+            const wasCorrect = sec.complete ? true : (e.userCorrect !== undefined ? e.userCorrect : e.correct);
+            const cls  = isA ? 'anchor' : (wasCorrect ? 'correct' : 'wrong');
+            const icon = isA ? '★' : (wasCorrect ? '✓' : '✗');
+            return `<div class="he-row ${cls}"><div class="he-row-title">${e.game.t}</div><div class="he-row-right"><div class="he-row-year">${e.game.y}</div><div class="he-row-icon">${icon}</div></div></div>`;
+          }).join('');
+          return `<div class="he-section"><div class="he-section-label">${HL[si]||'Section '+(si+1)}</div>${rows}</div>`;
+        }).join('');
+      }
+
+      return `<div class="history-entry played">
+        <div class="he-header expandable" data-idx="${idx}">
+          <div class="he-emoji">${emoji}</div>
+          <div class="he-info"><div class="he-date">${hFmtDate(dateStr)}${todayBadge}</div><div class="he-sub">${subLine}</div></div>
+          <div class="he-right"><div class="he-stars">${stars}</div>${sectionsHtml?'<div class="he-chevron">›</div>':''}</div>
+        </div>
+        ${sectionsHtml?`<div class="he-body" id="he-body-${idx}">${sectionsHtml}</div>`:''}
+      </div>`;
+    } else {
+      const state      = hGetFullState(dateStr);
+      const inProgress = state && !state.gameWon && !state.gameLost;
+      const placed     = inProgress ? (state.sections||[]).reduce((n,s)=>n+s.timeline.filter(t=>!t.locked).length,0) : 0;
+      const subLine    = inProgress ? `In progress · ${placed} game${placed!==1?'s':''} placed` : 'Not played yet';
+      const emoji      = inProgress ? '⏳' : '🎮';
+      const href       = isToday ? 'index.html' : `index.html?date=${dateStr}`;
+      const btnLabel   = isToday ? 'Play today' : (inProgress ? 'Continue' : 'Play');
+      return `<div class="history-entry unplayed">
+        <a class="he-header" href="${href}">
+          <div class="he-emoji">${emoji}</div>
+          <div class="he-info"><div class="he-date">${hFmtDate(dateStr)}${todayBadge}</div><div class="he-sub">${subLine}</div></div>
+          <div class="he-right"><span class="he-play-btn">${btnLabel} →</span></div>
+        </a>
+      </div>`;
+    }
+  }).join('');
+
+  root.innerHTML = summaryHtml + `<div class="history-list">${entriesHtml}</div>`;
+
+  root.querySelectorAll('.he-header.expandable').forEach(hdr => {
+    hdr.addEventListener('click', () => {
+      const body = document.getElementById('he-body-' + hdr.dataset.idx);
+      if (!body) return;
+      const open = body.classList.toggle('open');
+      hdr.classList.toggle('open', open);
+    });
+  });
+}
+
+// ═══════════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════════
 async function init() {
-  const d = new Date();
+  // History view — render inline so localStorage is shared with the game
+  if (new URLSearchParams(window.location.search).get('view') === 'history') {
+    renderHistoryView();
+    return;
+  }
+  const activeDate = getActiveDateStr();
+  const isPast = activeDate !== getTodayStr();
+  const [ay, am, ad] = activeDate.split('-').map(Number);
+  const d = new Date(ay, am - 1, ad);
   document.getElementById('date-pill').textContent =
     d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   document.getElementById('puzzle-pill').textContent = `Puzzle #${getDailySeed() % 1000}`;
+
+  // Past-puzzle banner
+  const banner = document.getElementById('past-puzzle-bar');
+  if (banner && isPast) {
+    const updateBanner = () => {
+      const t = window.i18n ? window.i18n.t('past.banner') : 'past.banner';
+      banner.innerHTML = '📅 ' + t;
+    };
+    updateBanner();
+    banner.style.display = 'flex';
+    window.addEventListener('langchange', updateBanner);
+  }
 
   document.getElementById('how-toggle').addEventListener('click', toggleHow);
   document.getElementById('check-btn').addEventListener('click', checkTimeline);
@@ -79,6 +289,7 @@ async function init() {
   if (loadState()) {
     render();
     if (gameWon || gameLost) {
+      saveResult(); // re-save in case it was missed on first completion
       const dock = document.getElementById('bottom-dock');
       if (dock) dock.style.display = 'none';
       document.body.style.paddingBottom = '0';
@@ -587,6 +798,8 @@ function checkTimeline() {
 
   if (allDone) {
     gameWon = true;
+    saveState();
+    saveResult();
     render();
     const dock = document.getElementById('bottom-dock');
     if (dock) dock.style.display = 'none';
@@ -597,6 +810,8 @@ function checkTimeline() {
     gameLost = true;
     sections.forEach(sec => {
       if (!sec.complete) {
+        // Save the user's last-check result per game before we sort to reveal correct order
+        sec.timeline.forEach(entry => { entry.userCorrect = entry.correct; });
         sec.timeline.sort((a, b) => a.game.y - b.game.y);
         sec.timeline.forEach((entry, i) => {
           const prevYear = i > 0 ? sec.timeline[i - 1].game.y : -Infinity;
@@ -606,6 +821,8 @@ function checkTimeline() {
         sec.revealed = true;
       }
     });
+    saveState();
+    saveResult();
     render();
     const dock = document.getElementById('bottom-dock');
     if (dock) dock.style.display = 'none';

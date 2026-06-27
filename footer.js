@@ -9,6 +9,7 @@
       '<span data-i18n="footer.credit">' + t('footer.credit') + '</span>' +
       ' <a href="https://www.igdb.com" target="_blank" rel="noopener">IGDB</a>' +
       ' &nbsp;·&nbsp; <a href="index.html" data-i18n="nav.daily">' + t('nav.daily') + '</a>' +
+      ' &nbsp;·&nbsp; <a href="index.html?view=history" data-i18n="nav.history">' + t('nav.history') + '</a>' +
       ' &nbsp;·&nbsp; <a href="blog.html" data-i18n="nav.blog">' + t('nav.blog') + '</a>' +
       ' &nbsp;·&nbsp; <a href="about.html" data-i18n="nav.about">' + t('nav.about') + '</a>' +
     '</p>';
