@@ -21,7 +21,7 @@
   header.className = 'site-header';
   header.innerHTML =
     '<div class="logo-wrap">' +
-      '<div class="logo">PIX<span>OLOGY</span></div>' +
+      '<div class="logo">GAME<span>OLOGY</span></div>' +
       '<div class="logo-sub" data-i18n="logo.sub">' + t('logo.sub') + '</div>' +
     '</div>' +
     '<nav class="site-nav">' +
