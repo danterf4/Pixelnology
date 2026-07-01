@@ -233,29 +233,26 @@ body {
   background: var(--accent-bg);
 }
 
-/* ── HOW TO PLAY ── */
-.how-bar {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 10px 14px;
-  font-size: 21px;
-  color: var(--text-muted);
-  margin-bottom: 0.75rem;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  user-select: none;
-}
-
-.how-bar:hover {
-  border-color: var(--border-md);
-}
-
-.how-bar .how-icon {
-  font-size: 25px;
-}
+  /* ── HOW TO PLAY (compact pill, lives in dock-meta-row) ── */
+  .how-bar {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 14px;
+    font-family: var(--mono);
+    padding: 3px 10px;
+    border-radius: 20px;
+    border: 1px solid var(--amber);
+    color: var(--amber);
+    background: var(--amber-bg);
+    margin-left: auto;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s, color 0.15s;
+    white-space: nowrap;
+  }
+  .how-bar:hover { background: var(--amber); color: #1a1209; }
+  .how-bar .how-icon { font-size: 14px; line-height: 1; }
 
 /* Modal overlay */
 .how-overlay {
@@ -1204,96 +1201,72 @@ body.has-sidebar {
   justify-content: center;
 }
 
-/* ── MOBILE ── */
-@media (max-width: 560px) {
-  .stats-row {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 6px;
-  }
+  /* ── MOBILE ── */
+  @media (max-width: 560px) {
+    .stats-row { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .stat-val { font-size: 31px; }
+    .site-header { flex-wrap: wrap; gap: 8px; }
+    .actions-row { flex-direction: column; }
+    .btn { width: 100%; text-align: center; }
+    .end-card { padding: 1.25rem; }
+    body.has-sidebar { padding-bottom: 230px; }
+    body.has-sidebar .site-footer { margin-bottom: 300px; }
+    .pool-card { width: 91px; }
+    .pc-cover { height: 91px; }
 
-  .stat-val {
-    font-size: 31px;
-  }
+    /* ── COMPACT MOBILE BOTTOM DOCK ── */
+    .bottom-dock { padding: 6px 0 8px; }
+    .dock-meta-row { margin-bottom: 6px; gap: 4px; }
+    .dock-meta-row .pill { font-size: 11px; padding: 2px 7px; }
+    .dock-header { margin-bottom: 4px; }
+    .dock-label { font-size: 11px; }
+    .dock-count { font-size: 11px; padding: 1px 6px; }
+    .how-bar { padding: 3px 8px; font-size: 11px; gap: 3px; }
+    .how-bar .how-icon { font-size: 11px; }
+    .dock-arrow { width: 26px; height: 26px; font-size: 18px; }
+    .dock-scroll { padding-bottom: 6px; gap: 6px; }
+    .pc-body { padding: 4px 6px 6px; }
+    .pool-card .pc-title { font-size: 15px; line-height: 1.15; min-height: 0; -webkit-line-clamp: 1; }
+    .pool-card .pc-check { width: 21px; height: 21px; font-size: 20px; }
 
-  .site-header {
-    flex-wrap: wrap;
-    gap: 8px;
+    /* ── MOBILE VERTICAL TIMELINE CARDS ── */
+    .tl-card {
+      flex-direction: column;
+      align-items: stretch;
+      padding: 0;
+      overflow: hidden;
+    }
+    .tl-card-left {
+      flex-direction: column !important;
+      align-items: stretch !important;
+      gap: 0 !important;
+      flex: 1 !important;
+    }
+    .tl-thumb {
+      width: 50%;
+      height: auto;
+      aspect-ratio: 3 / 4;
+      border-radius: 6px;
+      margin: 0 auto;
+      flex-shrink: 0;
+    }
+    .tl-thumb img {
+      object-fit: cover;
+    }
+    .tl-card-title {
+      white-space: normal;
+      text-align: center;
+      padding: 3px 6px;
+      font-size: 15px;
+      line-height: 1.2;
+    }
+    .tl-card-year { display: none; }
+    .tl-card-right {
+      width: 100%;
+      padding: 0 6px 4px;
+      justify-content: space-between;
+    }
   }
-
-  .actions-row {
-    flex-direction: column;
-  }
-
-  .btn {
-    width: 100%;
-    text-align: center;
-  }
-
-  .end-card {
-    padding: 1.25rem;
-  }
-
-  body.has-sidebar {
-    padding-bottom: 380px;
-  }
-
-  body.has-sidebar .site-footer {
-    margin-bottom: 300px;
-  }
-
-  .pool-card {
-    width: 76px;
-  }
-
-  .pc-cover {
-    height: 95px;
-  }
-
-  /* ── MOBILE VERTICAL TIMELINE CARDS ── */
-  .tl-card {
-    flex-direction: column;
-    align-items: stretch;
-    padding: 0;
-    overflow: hidden;
-  }
-
-  .tl-card-left {
-    flex-direction: column !important;
-    align-items: stretch !important;
-    gap: 0 !important;
-    flex: 1 !important;
-  }
-
-  .tl-thumb {
-    width: 100%;
-    height: auto;
-    aspect-ratio: 3 / 4;
-    border-radius: 0;
-    margin-right: 0;
-    flex-shrink: 0;
-  }
-
-  .tl-thumb img {
-    object-fit: cover;
-  }
-
-  .tl-card-title {
-    white-space: normal;
-    padding: 3px 6px;
-    line-height: 1.2;
-  }
-
-  .tl-card-year {
-    display: none;
-    font-size: .8rem;
-  }
-
-  .tl-card-right {
-    width: 100%;
-    padding: 0 6px 4px;
-    justify-content: space-between;
-  }
-}
 
 /* ── DESKTOP LEFT SIDEBAR DOCK ── */
 @media (min-width: 561px) {
