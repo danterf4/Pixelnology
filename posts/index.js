@@ -11,8 +11,8 @@ const POST_INDEX = [
     date: '2026-06-24',
     tags: ['personal'],
     excerpt: {
-      en: 'First post. A few words on why I built Pixology and what I want to do with this space',
-      es: 'Primer post. Unas palabras sobre por qué construí Pixology y qué quiero hacer con este espacio.'
+      en: 'First post. A few words on why I built Gameology and what I want to do with this space',
+      es: 'Primer post. Unas palabras sobre por qué construí Gameology y qué quiero hacer con este espacio.'
     }
   }
 ];

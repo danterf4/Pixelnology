@@ -58,8 +58,9 @@ function saveResult() {
   try {
     const correctCount = timeline.filter(e => !e.anchor && e.correct).length;
     const total = poolGames.length;
+    // Stars reflect attempts used, not partial correctness — a loss is always 0 stars.
     const stars = gameLost
-      ? (correctCount === 0 ? '☆☆☆' : correctCount < total * 2 / 3 ? '★☆☆' : '★★☆')
+      ? '☆☆☆'
       : (checksUsed === 1 ? '★★★' : checksUsed === 2 ? '★★☆' : '★☆☆');
     const results = JSON.parse(localStorage.getItem(RESULTS_KEY) || '{}');
     results[getActiveDateStr()] = { stars, checksUsed, gameLost, correctCount, total };
@@ -123,7 +124,7 @@ function loadState() {
 // HISTORY VIEW
 // ═══════════════════════════════════════════════════════
 function renderHistoryView() {
-  document.title = 'Puzzle Archive — Pixology';
+  document.title = 'Puzzle Archive — Gameology';
   document.body.classList.remove('has-sidebar');
   document.getElementById('game-view').style.display = 'none';
   document.getElementById('history-view').style.display = 'block';
@@ -187,7 +188,7 @@ function renderHistoryView() {
             const cc = fs.timeline.filter(e => !e.anchor && e.correct).length;
             const total = fs.timeline.filter(e => !e.anchor).length;
             const st = fs.gameLost
-              ? (cc===0?'☆☆☆':cc<total*2/3?'★☆☆':'★★☆')
+              ? '☆☆☆'
               : (fs.checksUsed===1?'★★★':fs.checksUsed===2?'★★☆':'★☆☆');
             results[dateStr] = { stars:st, checksUsed:fs.checksUsed, gameLost:fs.gameLost, correctCount:cc, total };
           }
@@ -195,7 +196,7 @@ function renderHistoryView() {
           // Legacy sections format
           const cc = (fs.sections||[]).filter(s => s.complete).length;
           const st = fs.gameLost
-            ? (cc===0?'☆☆☆':cc===1?'★☆☆':'★★☆')
+            ? '☆☆☆'
             : (fs.checksUsed===1?'★★★':fs.checksUsed===2?'★★☆':'★☆☆');
           results[dateStr] = { stars:st, checksUsed:fs.checksUsed, gameLost:fs.gameLost, completedCount:cc };
         }
@@ -891,14 +892,13 @@ function checkTimeline() {
     setMsg('', '');
   } else if (outOfAttempts) {
     gameLost = true;
-    // Save the user's last-check result per game, then sort the whole timeline to reveal the correct order
+    // Save the user's last-check result per game, then sort the whole timeline to reveal the correct order.
+    // Note: once sorted by year, every entry trivially satisfies prevYear<=y<=nextYear, so recomputing
+    // `correct` from neighbor order here would wrongly mark every game as correct — use the saved
+    // userCorrect (the actual guess result) instead so wrong placements still show as wrong.
     timeline.forEach(entry => { entry.userCorrect = entry.locked ? true : entry.correct; });
     timeline.sort((a, b) => a.game.y - b.game.y);
-    timeline.forEach((entry, i) => {
-      const prevYear = i > 0 ? timeline[i - 1].game.y : -Infinity;
-      const nextYear = i < timeline.length - 1 ? timeline[i + 1].game.y : Infinity;
-      entry.correct = entry.game.y >= prevYear && entry.game.y <= nextYear;
-    });
+    timeline.forEach(entry => { entry.correct = entry.userCorrect; });
     timelineRevealed = true;
     saveState();
     saveResult();
@@ -936,7 +936,8 @@ function showEndScreen() {
   let stars, emoji, msg;
 
   if (gameLost) {
-    stars = correctCount === 0 ? '☆☆☆' : correctCount < total * 2 / 3 ? '★☆☆' : '★★☆';
+    // Stars reflect attempts used, not partial correctness — a loss is always 0 stars.
+    stars = '☆☆☆';
     emoji = '💀';
     msg = correctCount === 0
       ? 'Better luck next time!'
@@ -984,13 +985,14 @@ function copyShare() {
   const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   const correctCount = timeline.filter(e => !e.anchor && e.correct).length;
   const total = poolGames.length;
+  // Stars reflect attempts used, not partial correctness — a loss is always 0 stars.
   const stars = gameLost
-    ? (correctCount === 0 ? '☆☆☆' : correctCount < total * 2 / 3 ? '★☆☆' : '★★☆')
+    ? '☆☆☆'
     : (checksUsed === 1 ? '★★★' : checksUsed === 2 ? '★★☆' : '★☆☆');
   const result = gameLost
     ? `Out of attempts — ${correctCount}/${total} games correct`
     : `${checksUsed} check${checksUsed !== 1 ? 's' : ''} used`;
-  const text = `Pixology — ${dateStr}\n${stars}\n${result}\n\nCan you beat my score?`;
+  const text = `Gameology — ${dateStr}\n${stars}\n${result}\n\nCan you beat my score?`;
   navigator.clipboard.writeText(text).then(() => {
     const el = document.getElementById('copy-confirm');
     if (el) { el.textContent = 'Copied to clipboard!'; setTimeout(() => { el.textContent = ''; }, 2500); }
