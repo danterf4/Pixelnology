@@ -34,8 +34,8 @@
   --red-bg: rgba(86, 227, 240, 0.1);
   --amber: #d6f523;
   --amber-bg: rgba(102, 245, 35, 0.1);
-  --mono: 'Ithaca', monospace;
-  --sans: 'Ithaca', sans-serif;
+  --mono: 'Nunito', monospace;
+  --sans: 'Nunito', sans-serif;
   --radius: 4px;
   --radius-lg: 2px;
 }
@@ -174,7 +174,7 @@ body {
 .dock-meta-row {
   display: flex;
   gap: 6px;
-  flex-wrap: wrap;
+  justify-content: space-between;
   margin-bottom: 12px;
 }
 
@@ -221,7 +221,7 @@ body {
   font-size: 18px;
   font-family: var(--mono);
   padding: 3px 9px;
-  border-radius: 20px;
+  border-radius: 4px;
   border: 1px solid var(--border-md);
   color: var(--text-muted);
   background: var(--surface);
@@ -235,13 +235,13 @@ body {
 
   /* ── HOW TO PLAY (compact pill, lives in dock-meta-row) ── */
   .how-bar {
-    display: inline-flex;
+    /* display: inline-flex; */
     align-items: center;
     gap: 5px;
     font-size: 14px;
     font-family: var(--mono);
     padding: 3px 10px;
-    border-radius: 20px;
+    border-radius: 4px;
     border: 1px solid var(--amber);
     color: var(--amber);
     background: var(--amber-bg);
@@ -250,10 +250,15 @@ body {
     user-select: none;
     transition: background 0.15s, color 0.15s;
     white-space: nowrap;
+    margin-top: 1rem;
+    width: 100%;
   }
   .how-bar:hover { background: var(--amber); color: #1a1209; }
   .how-bar .how-icon { font-size: 14px; line-height: 1; }
 
+  .how-bar > p{
+    text-align: center;
+  }
 /* Modal overlay */
 .how-overlay {
   position: fixed;
@@ -325,7 +330,7 @@ body {
 
 .how-modal ol {
   padding-left: 1.2rem;
-  font-size: 23px;
+  font-size: 1rem;
   color: var(--text-dim);
   line-height: 1.8;
 }
@@ -371,7 +376,7 @@ body {
 
 /* ── GAME POOL ── */
 .section-label {
-  font-size: 18px;
+  font-size: 1rem;
   text-transform: uppercase;
   letter-spacing: 0.8px;
   color: var(--text-muted);
@@ -589,7 +594,7 @@ body {
   margin-left: 66px;
   flex: 1;
   height: 36px;
-  border-radius: 8px;
+  border-radius: 4px;
   transition: height 0.12s, background 0.12s, border-color 0.12s, box-shadow 0.12s;
   border: 2px dashed var(--border-md);
   background: var(--surface2);
@@ -614,6 +619,7 @@ body {
   border-color: var(--accent);
   background: var(--accent-bg);
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+  z-index: 1000;
 }
 
 .tl-drop-zone.drag-over::after {
@@ -659,6 +665,7 @@ body {
   position: relative;
   z-index: 2;
   margin-right: 8px;
+  margin-left: -4px;
 }
 
 .tl-dot.anchor {
@@ -680,7 +687,7 @@ body {
   flex: 1;
   background: var(--surface2);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 4px;
   padding: 9px 12px;
   display: flex;
   align-items: center;
@@ -1081,8 +1088,9 @@ body.has-sidebar {
   color: var(--accent-light);
   background: var(--accent-bg);
   border: 1px solid var(--accent);
-  border-radius: 20px;
+  border-radius: 4px;
   padding: 2px 8px;
+  margin-bottom: 1rem;
 }
 
 .dock-scroll-wrap {
@@ -1101,7 +1109,7 @@ body.has-sidebar {
   background: var(--surface2);
   border: 1px solid var(--border-md);
   color: var(--text-muted);
-  font-size: 28px;
+  font-size: 1rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1111,6 +1119,7 @@ body.has-sidebar {
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
   z-index: 2;
+  position: absolute;
 }
 
 .dock-arrow:active {
@@ -1133,7 +1142,7 @@ body.has-sidebar {
   padding-bottom: 10px;
   -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
-  scrollbar-width: thin;
+  scrollbar-width: none;
   scrollbar-color: var(--accent) var(--surface2);
 }
 
@@ -1221,7 +1230,7 @@ body.has-sidebar {
     .dock-header { margin-bottom: 4px; }
     .dock-label { font-size: 11px; }
     .dock-count { font-size: 11px; padding: 1px 6px; }
-    .how-bar { padding: 3px 8px; font-size: 11px; gap: 3px; }
+    .how-bar { padding: 3px 8px; font-size: 11px; gap: 3px; margin-top: 1rem; text-align: center;}
     .how-bar .how-icon { font-size: 11px; }
     .dock-arrow { width: 26px; height: 26px; font-size: 18px; }
     .dock-scroll { padding-bottom: 6px; gap: 6px; }
@@ -1267,6 +1276,8 @@ body.has-sidebar {
       justify-content: space-between;
     }
   }
+
+
 
 /* ── DESKTOP LEFT SIDEBAR DOCK ── */
 @media (min-width: 561px) {
@@ -1355,7 +1366,9 @@ body.has-sidebar {
   }
 
   .dock-count {
-    font-size: 21px;
+    font-size: 1rem;
+    align-self: right !important;
+    text-align: center;
   }
 
   .pool-card .pc-title {
@@ -1375,20 +1388,25 @@ body.has-sidebar {
 
   #dock-arrow-left {
     font-size: 0;
+    position: absolute;
+    top: 10px;
+    right: calc(50% - 14px);
   }
 
   #dock-arrow-left::after {
-    content: '↑';
     font-size: 32px;
   }
 
   #dock-arrow-right {
     font-size: 0;
+    position: absolute;
+    bottom: 10px;
+    right: calc(50% - 14px);
   }
 
   #dock-arrow-right::after {
-    content: '↓';
     font-size: 32px;
+
   }
 
   /* Timeline 80/20 split */
@@ -1416,6 +1434,10 @@ body.has-sidebar {
   .timeline-actions-panel .btn {
     width: 100%;
     flex: none;
+  }
+
+  #howto{
+        text-align: center !important;
   }
 }
 
