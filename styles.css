@@ -1,36 +1,43 @@
 /* ── ITHACA FONT ── */
-@font-face {
+/* @font-face {
   font-family: 'Ithaca';
   src: url('fonts/Ithaca-LVB75.ttf') format('truetype');
   font-weight: 400 700;
   font-style: normal;
   font-display: swap;
+} */
+
+.nunito{
+  font-family: "Nunito", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 200;
+  font-style: normal;
 }
 
   :root {
-    --bg: #0d0f14;
-    --surface: #161921;
-    --surface2: #1e2230;
-    --surface3: #252b3b;
-    --border: rgba(255,255,255,0.07);
-    --border-md: rgba(255,255,255,0.13);
-    --border-hi: rgba(255,255,255,0.22);
+    --bg: #091a27;
+    --surface: #021525;
+    --surface2: #205b4390;
+    --surface3: #1c3144;
+    --border: rgba(255, 255, 255, 0.07);
+    --border-md: rgba(255, 255, 255, 0.13);
+    --border-hi: rgba(255, 255, 255, 0.22);
     --text: #e8eaf0;
-    --text-muted: #6b7280;
-    --text-dim: #9ca3af;
-    --accent: #7c6af7;
-    --accent-light: #a89eff;
-    --accent-bg: rgba(124,106,247,0.12);
-    --green: #22c77a;
+    --text-muted: #cbede2;
+    --text-dim: #e0fce8;
+    --accent: #69B437;
+    --accent-light: #91DA73;
+    --accent-bg: #0E3338;
+    --green: #4f9520;
     --green-bg: rgba(34,199,122,0.1);
     --red: #f0566b;
-    --red-bg: rgba(240,86,107,0.1);
-    --amber: #f5a623;
-    --amber-bg: rgba(245,166,35,0.1);
+    --red-bg: rgba(86, 227, 240, 0.1);
+    --amber: #d6f523;
+    --amber-bg: rgba(102, 245, 35, 0.1);
     --mono: 'Ithaca', monospace;
     --sans: 'Ithaca', sans-serif;
-    --radius: 10px;
-    --radius-lg: 14px;
+    --radius: 4px;
+    --radius-lg: 2px;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html { scroll-behavior: smooth; }
