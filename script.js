@@ -32,17 +32,17 @@ function getDailySeed(dateStr) {
 // STATE
 // ═══════════════════════════════════════════════════════
 let allGames = [];
-let sections = []; // [{anchor, timeline:[{game,locked,correct}], complete:false}, ...]
+let timeline = []; // flat, ordered: [{game, anchor, locked, correct, userCorrect}, ...]
 let poolGames = []; // all non-anchor games
 let checksUsed = 0;
 let gameWon = false;
 let gameLost = false;
+let timelineRevealed = false; // true once the correct order has been revealed after a loss
 const coverCache = {};
 
-const SECTION_SIZE = 5; // games per section (1 anchor + 4 to place)
-const NUM_SECTIONS = 3;
+const ANCHOR_COUNT = 3;       // evenly-spaced pre-placed reference games
+const ANCHOR_CHUNK_SIZE = 5;  // DAILY_COUNT / ANCHOR_COUNT — used to pick one anchor per chunk
 const MAX_CHECKS = 3;
-const SECTION_LABELS = ['Early Era', 'Mid Era', 'Modern Era'];
 
 // ═══════════════════════════════════════════════════════
 // PERSISTENCE
@@ -56,12 +56,13 @@ const RESULTS_KEY = 'pixelnology_results';
 
 function saveResult() {
   try {
-    const completedCount = sections.filter(s => s.complete).length;
+    const correctCount = timeline.filter(e => !e.anchor && e.correct).length;
+    const total = poolGames.length;
     const stars = gameLost
-      ? (completedCount === 0 ? '☆☆☆' : completedCount === 1 ? '★☆☆' : '★★☆')
+      ? (correctCount === 0 ? '☆☆☆' : correctCount < total * 2 / 3 ? '★☆☆' : '★★☆')
       : (checksUsed === 1 ? '★★★' : checksUsed === 2 ? '★★☆' : '★☆☆');
     const results = JSON.parse(localStorage.getItem(RESULTS_KEY) || '{}');
-    results[getActiveDateStr()] = { stars, checksUsed, gameLost, completedCount };
+    results[getActiveDateStr()] = { stars, checksUsed, gameLost, correctCount, total };
     localStorage.setItem(RESULTS_KEY, JSON.stringify(results));
     console.log('[Pixelnology] saveResult OK:', getActiveDateStr(), results[getActiveDateStr()]);
   } catch (e) {
@@ -74,10 +75,11 @@ function saveState() {
     localStorage.setItem(getSaveKey(), JSON.stringify({
       date: getActiveDateStr(),
       allGames,
-      sections,
+      timeline,
       checksUsed,
       gameWon,
       gameLost,
+      timelineRevealed,
       coverCache
     }));
   } catch (e) { /* storage full or unavailable */ }
@@ -103,13 +105,15 @@ function loadState() {
     if (!raw) return false;
     const s = JSON.parse(raw);
     if (s.date !== getActiveDateStr()) return false;
-    allGames   = s.allGames;
-    sections   = s.sections;
-    checksUsed = s.checksUsed;
-    gameWon    = s.gameWon;
-    gameLost   = s.gameLost;
+    if (!s.timeline) return false; // save from before the single-timeline rework — start fresh
+    allGames         = s.allGames;
+    timeline         = s.timeline;
+    checksUsed       = s.checksUsed;
+    gameWon          = s.gameWon;
+    gameLost         = s.gameLost;
+    timelineRevealed = !!s.timelineRevealed;
     Object.assign(coverCache, s.coverCache || {});
-    const anchorIds = new Set(sections.map(sec => sec.anchor.id));
+    const anchorIds = new Set(timeline.filter(e => e.anchor).map(e => e.game.id));
     poolGames = allGames.filter(g => !anchorIds.has(g.id));
     return true;
   } catch (e) { return false; }
@@ -177,7 +181,18 @@ function renderHistoryView() {
     if (!results[dateStr]) {
       try {
         const fs = JSON.parse(localStorage.getItem('pixelnology_state_' + dateStr) || 'null');
-        if (fs && (fs.gameWon || fs.gameLost || (fs.sections && fs.sections.every(s => s.complete)))) {
+        if (fs && fs.timeline) {
+          // New flat-timeline format
+          if (fs.gameWon || fs.gameLost) {
+            const cc = fs.timeline.filter(e => !e.anchor && e.correct).length;
+            const total = fs.timeline.filter(e => !e.anchor).length;
+            const st = fs.gameLost
+              ? (cc===0?'☆☆☆':cc<total*2/3?'★☆☆':'★★☆')
+              : (fs.checksUsed===1?'★★★':fs.checksUsed===2?'★★☆':'★☆☆');
+            results[dateStr] = { stars:st, checksUsed:fs.checksUsed, gameLost:fs.gameLost, correctCount:cc, total };
+          }
+        } else if (fs && (fs.gameWon || fs.gameLost || (fs.sections && fs.sections.every(s => s.complete)))) {
+          // Legacy sections format
           const cc = (fs.sections||[]).filter(s => s.complete).length;
           const st = fs.gameLost
             ? (cc===0?'☆☆☆':cc===1?'★☆☆':'★★☆')
@@ -189,22 +204,32 @@ function renderHistoryView() {
     const result = results[dateStr];
 
     if (result) {
-      const { stars, checksUsed: cu, gameLost: gl, completedCount: cc } = result;
+      const { stars, checksUsed: cu, gameLost: gl } = result;
       const emoji   = gl ? '💀' : (cu===1?'🏆':cu<=2?'⭐':'🕹️');
-      const subLine = gl
-        ? `Out of attempts · ${cc}/3 sections correct`
-        : `${cu} check${cu!==1?'s':''} used · ${cc}/3 sections`;
+      const hasNewFormat = result.total !== undefined;
+      const subLine = hasNewFormat
+        ? (gl ? `Out of attempts · ${result.correctCount}/${result.total} games correct`
+              : `${cu} check${cu!==1?'s':''} used · ${result.correctCount}/${result.total} games`)
+        : (gl ? `Out of attempts · ${result.completedCount}/3 sections correct`
+              : `${cu} check${cu!==1?'s':''} used · ${result.completedCount}/3 sections`);
 
-      let sectionsHtml = '';
+      let breakdownHtml = '';
       const state = hGetFullState(dateStr);
-      if (state && state.sections) {
+      if (state && state.timeline) {
+        const tl = state.timelineRevealed ? [...state.timeline].sort((a,b)=>a.game.y-b.game.y) : state.timeline;
+        breakdownHtml = tl.map(e => {
+          const isA = !!e.anchor;
+          const wasCorrect = isA ? true : (e.userCorrect !== undefined ? e.userCorrect : e.correct);
+          const cls  = isA ? 'anchor' : (wasCorrect ? 'correct' : 'wrong');
+          const icon = isA ? '★' : (wasCorrect ? '✓' : '✗');
+          return `<div class="he-row ${cls}"><div class="he-row-title">${e.game.t}</div><div class="he-row-right"><div class="he-row-year">${e.game.y}</div><div class="he-row-icon">${icon}</div></div></div>`;
+        }).join('');
+      } else if (state && state.sections) {
         const aIds = new Set(state.sections.map(s => s.anchor && s.anchor.id));
-        sectionsHtml = state.sections.map((sec, si) => {
+        breakdownHtml = state.sections.map((sec, si) => {
           const tl = sec.revealed ? [...sec.timeline].sort((a,b)=>a.game.y-b.game.y) : sec.timeline;
           const rows = tl.map(e => {
             const isA = aIds.has(e.game.id);
-            // completed sections: user solved it (all ✓)
-            // revealed (lost) sections: use userCorrect saved before sort; fall back to e.correct
             const wasCorrect = sec.complete ? true : (e.userCorrect !== undefined ? e.userCorrect : e.correct);
             const cls  = isA ? 'anchor' : (wasCorrect ? 'correct' : 'wrong');
             const icon = isA ? '★' : (wasCorrect ? '✓' : '✗');
@@ -218,14 +243,17 @@ function renderHistoryView() {
         <div class="he-header expandable" data-idx="${idx}">
           <div class="he-emoji">${emoji}</div>
           <div class="he-info"><div class="he-date">${hFmtDate(dateStr)}${todayBadge}</div><div class="he-sub">${subLine}</div></div>
-          <div class="he-right"><div class="he-stars">${stars}</div>${sectionsHtml?'<div class="he-chevron">›</div>':''}</div>
+          <div class="he-right"><div class="he-stars">${stars}</div>${breakdownHtml?'<div class="he-chevron">›</div>':''}</div>
         </div>
-        ${sectionsHtml?`<div class="he-body" id="he-body-${idx}">${sectionsHtml}</div>`:''}
+        ${breakdownHtml?`<div class="he-body" id="he-body-${idx}">${breakdownHtml}</div>`:''}
       </div>`;
     } else {
       const state      = hGetFullState(dateStr);
       const inProgress = state && !state.gameWon && !state.gameLost;
-      const placed     = inProgress ? (state.sections||[]).reduce((n,s)=>n+s.timeline.filter(t=>!t.locked).length,0) : 0;
+      const placed     = inProgress
+        ? (state.timeline ? state.timeline.filter(e=>!e.anchor).length
+                           : (state.sections||[]).reduce((n,s)=>n+s.timeline.filter(t=>!t.locked).length,0))
+        : 0;
       const subLine    = inProgress ? `In progress · ${placed} game${placed!==1?'s':''} placed` : 'Not played yet';
       const emoji      = inProgress ? '⏳' : '🎮';
       const href       = isToday ? 'index.html' : `index.html?date=${dateStr}`;
@@ -317,22 +345,18 @@ async function init() {
     return;
   }
 
-  // Split into 3 sections of 5, anchor at middle of each section
-  sections = [];
-  for (let s = 0; s < NUM_SECTIONS; s++) {
-    const sectionGames = allGames.slice(s * SECTION_SIZE, (s + 1) * SECTION_SIZE);
-    const anchorIdx = Math.floor(sectionGames.length / 2);
-    const anchor = sectionGames[anchorIdx];
-    sections.push({
-      anchor,
-      timeline: [{ game: anchor, locked: true }],
-      complete: false,
-      label: SECTION_LABELS[s]
-    });
+  // Pick 3 evenly-spaced anchors (middle game of each chunk) and pre-place them,
+  // already locked, directly into a single chronological timeline.
+  timeline = [];
+  for (let s = 0; s < ANCHOR_COUNT; s++) {
+    const chunk = allGames.slice(s * ANCHOR_CHUNK_SIZE, (s + 1) * ANCHOR_CHUNK_SIZE);
+    const anchor = chunk[Math.floor(chunk.length / 2)];
+    timeline.push({ game: anchor, anchor: true, locked: true });
   }
+  // allGames is sorted by year, so anchors taken chunk-by-chunk are already in order.
 
   // All non-anchor games go into the pool — shuffled with seeded RNG
-  const anchorIds = new Set(sections.map(s => s.anchor.id));
+  const anchorIds = new Set(timeline.map(e => e.game.id));
   poolGames = allGames.filter(g => !anchorIds.has(g.id));
 
   // Seeded Fisher-Yates shuffle
@@ -368,7 +392,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // RENDER
 // ═══════════════════════════════════════════════════════
 function render() {
-  if (!sections.length) return;
+  if (!timeline.length) return;
   renderPool();
   renderTimeline();
   renderStats();
@@ -392,8 +416,7 @@ function injectCover(el, gameId, type) {
 function renderPool() {
   const grid = document.getElementById('pool-grid');
   grid.innerHTML = '';
-  const placedIds = new Set();
-  sections.forEach(sec => sec.timeline.forEach(t => placedIds.add(t.game.id)));
+  const placedIds = new Set(timeline.map(t => t.game.id));
 
   poolGames.forEach(g => {
     if (placedIds.has(g.id)) return; // hide placed games from sidebar
@@ -420,9 +443,9 @@ function renderPool() {
     div.appendChild(body);
 
     div.draggable = true;
-    div.addEventListener('dragstart', e => onDragStart(e, g, 'pool', null, null));
+    div.addEventListener('dragstart', e => onDragStart(e, g, 'pool', null));
     div.addEventListener('dragend', onDragEnd);
-    div.addEventListener('touchstart', e => onTouchStart(e, g, 'pool', null, null), { passive: false });
+    div.addEventListener('touchstart', e => onTouchStart(e, g, 'pool', null), { passive: false });
 
     // Click opens info popup (only if not a drag)
     div.addEventListener('click', e => {
@@ -437,30 +460,16 @@ function renderTimeline() {
   const container = document.getElementById('tl-items');
   container.innerHTML = '';
 
-  sections.forEach((sec, sIdx) => {
-    const secWrap = document.createElement('div');
-    secWrap.className = 'tl-section-wrap' + (sec.complete ? ' complete' : '');
-    secWrap.dataset.section = sIdx;
+  const interactive = !gameWon && !gameLost;
 
-    if (!sec.complete) {
-      secWrap.appendChild(makeGap(sIdx, 0));
-    }
-    sec.timeline.forEach((entry, i) => {
-      secWrap.appendChild(makeItemRow(entry, sIdx, i));
-      if (!sec.complete) secWrap.appendChild(makeGap(sIdx, i + 1));
-    });
-
-    container.appendChild(secWrap);
-
-    if (sIdx < sections.length - 1) {
-      const divider = document.createElement('div');
-      divider.className = 'tl-section-divider';
-      container.appendChild(divider);
-    }
+  if (interactive) container.appendChild(makeGap(0));
+  timeline.forEach((entry, i) => {
+    container.appendChild(makeItemRow(entry, i));
+    if (interactive) container.appendChild(makeGap(i + 1));
   });
 }
 
-function makeGap(sIdx, insertIdx) {
+function makeGap(insertIdx) {
   const div = document.createElement('div');
   div.className = 'tl-gap';
   const line = document.createElement('div');
@@ -468,25 +477,27 @@ function makeGap(sIdx, insertIdx) {
   div.appendChild(line);
   const zone = document.createElement('div');
   zone.className = 'tl-drop-zone';
-  zone.dataset.sectionIdx = sIdx;
   zone.dataset.insertIdx = insertIdx;
   zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
   zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
-  zone.addEventListener('drop', e => { e.preventDefault(); zone.classList.remove('drag-over'); dropAt(sIdx, insertIdx); });
+  zone.addEventListener('drop', e => { e.preventDefault(); zone.classList.remove('drag-over'); dropAt(insertIdx); });
   div.appendChild(zone);
   return div;
 }
 
-function makeItemRow(entry, sIdx, idx) {
+function makeItemRow(entry, idx) {
   const row = document.createElement('div');
   row.className = 'tl-item';
 
+  const isOver = gameWon || gameLost;
+  const hasFeedback = entry.correct !== undefined;
+
   const yearCol = document.createElement('div');
   yearCol.className = 'tl-year-col';
-  if (entry.locked && entry.correct !== false) {
+  if (entry.anchor) {
     yearCol.textContent = entry.game.y;
     yearCol.style.color = 'var(--amber)';
-  } else if (sections[sIdx].complete || sections[sIdx].revealed || gameWon) {
+  } else if (isOver || entry.locked) {
     yearCol.textContent = entry.game.y;
     yearCol.style.color = entry.correct === false ? 'var(--red)' : 'var(--text-muted)';
   }
@@ -494,19 +505,17 @@ function makeItemRow(entry, sIdx, idx) {
 
   const dot = document.createElement('div');
   dot.className = 'tl-dot' +
-    (entry.locked ? ' anchor' : '') +
-    ((sections[sIdx].complete || sections[sIdx].revealed || gameWon) && entry.correct === true ? ' correct' : '') +
-    ((sections[sIdx].complete || sections[sIdx].revealed || gameWon) && entry.correct === false ? ' wrong' : '');
+    (entry.anchor ? ' anchor' : '') +
+    ((isOver || entry.locked) && entry.correct === true ? ' correct' : '') +
+    (hasFeedback && entry.correct === false ? ' wrong' : '');
   row.appendChild(dot);
 
   const card = document.createElement('div');
-  const sec = sections[sIdx];
-  const isRevealed = sec.complete || sec.revealed || gameWon;
   card.className = 'tl-card' +
-    (entry.locked ? ' anchor-card' : '') +
-    (!entry.locked && !sec.complete && !sec.revealed && !gameWon ? ' removable' : '') +
-    (isRevealed && entry.correct === true ? ' correct' : '') +
-    (isRevealed && entry.correct === false ? ' wrong' : '');
+    (entry.anchor ? ' anchor-card' : '') +
+    (!entry.locked && !isOver ? ' removable' : '') +
+    ((isOver || entry.locked) && entry.correct === true ? ' correct' : '') +
+    (hasFeedback && entry.correct === false ? ' wrong' : '');
 
   const left = document.createElement('div');
   left.className = 'tl-card-left';
@@ -531,12 +540,12 @@ function makeItemRow(entry, sIdx, idx) {
   const right = document.createElement('div');
   right.className = 'tl-card-right';
 
-  if (entry.locked) {
+  if (entry.anchor) {
     const yr = document.createElement('div');
     yr.className = 'tl-card-year amber';
     yr.textContent = entry.game.y + ' ★';
     right.appendChild(yr);
-  } else if (isRevealed) {
+  } else if (isOver) {
     const yr = document.createElement('div');
     yr.className = 'tl-card-year ' + (entry.correct ? 'green' : 'red');
     yr.textContent = entry.game.y;
@@ -546,12 +555,40 @@ function makeItemRow(entry, sIdx, idx) {
     icon.textContent = entry.correct ? '✓' : '✗';
     icon.style.color = entry.correct ? 'var(--green)' : 'var(--red)';
     right.appendChild(icon);
+  } else if (entry.locked) {
+    // Confirmed correct on an earlier check — locked in green, can't be moved again
+    const yr = document.createElement('div');
+    yr.className = 'tl-card-year green';
+    yr.textContent = entry.game.y;
+    right.appendChild(yr);
+    const icon = document.createElement('span');
+    icon.className = 'tl-status-icon';
+    icon.textContent = '✓';
+    icon.style.color = 'var(--green)';
+    right.appendChild(icon);
+  } else if (hasFeedback) {
+    // Checked and still wrong — show the year in red plus a remove button
+    const yr = document.createElement('div');
+    yr.className = 'tl-card-year red';
+    yr.textContent = entry.game.y;
+    right.appendChild(yr);
+    const icon = document.createElement('span');
+    icon.className = 'tl-status-icon';
+    icon.textContent = '✗';
+    icon.style.color = 'var(--red)';
+    right.appendChild(icon);
+    const rmBtn = document.createElement('button');
+    rmBtn.className = 'remove-btn';
+    rmBtn.textContent = '×';
+    rmBtn.title = 'Remove from timeline';
+    rmBtn.addEventListener('click', (e) => { e.stopPropagation(); removeGame(idx); });
+    right.appendChild(rmBtn);
   } else {
     const rmBtn = document.createElement('button');
     rmBtn.className = 'remove-btn';
     rmBtn.textContent = '×';
     rmBtn.title = 'Remove from timeline';
-    rmBtn.addEventListener('click', (e) => { e.stopPropagation(); removeGame(sIdx, idx); });
+    rmBtn.addEventListener('click', (e) => { e.stopPropagation(); removeGame(idx); });
     right.appendChild(rmBtn);
   }
 
@@ -559,11 +596,11 @@ function makeItemRow(entry, sIdx, idx) {
   card.appendChild(right);
   row.appendChild(card);
 
-  if (!entry.locked && !sec.complete && !sec.revealed && !gameWon) {
+  if (!entry.locked && !isOver) {
     card.draggable = true;
-    card.addEventListener('dragstart', e => onDragStart(e, entry.game, 'timeline', sIdx, idx));
+    card.addEventListener('dragstart', e => onDragStart(e, entry.game, 'timeline', idx));
     card.addEventListener('dragend', onDragEnd);
-    card.addEventListener('touchstart', e => onTouchStart(e, entry.game, 'timeline', sIdx, idx), { passive: false });
+    card.addEventListener('touchstart', e => onTouchStart(e, entry.game, 'timeline', idx), { passive: false });
   }
 
   return row;
@@ -572,49 +609,38 @@ function makeItemRow(entry, sIdx, idx) {
 // ═══════════════════════════════════════════════════════
 // ACTIONS
 // ═══════════════════════════════════════════════════════
-function removeGame(sIdx, idx) {
-  const entry = sections[sIdx].timeline[idx];
-  if (entry.locked || gameLost) return;
-  sections[sIdx].timeline.splice(idx, 1);
-  delete sections[sIdx].wrongCount;
+function removeGame(idx) {
+  const entry = timeline[idx];
+  if (!entry || entry.locked || gameWon || gameLost) return;
+  timeline.splice(idx, 1);
   render();
 }
 
 function clearAll() {
   if (gameWon || gameLost) return;
-  sections.forEach(sec => {
-    if (!sec.complete) {
-      sec.timeline = [{ game: sec.anchor, locked: true }];
-      delete sec.wrongCount;
-    }
-  });
+  // Keep anchors and any already-confirmed-correct (locked) games — only clear
+  // the games that are still wrong or unchecked.
+  timeline = timeline.filter(e => e.locked);
   render();
 }
 
-function dropAt(sIdx, insertIdx) {
+function dropAt(insertIdx) {
   if (!dragState.game || gameWon || gameLost) return;
-  const sec = sections[sIdx];
-  if (sec.complete) return;
   const g = dragState.game;
 
-  if (dragState.source === 'timeline' && dragState.sectionIdx !== null) {
-    const fromSec = sections[dragState.sectionIdx];
-    if (!fromSec.complete) {
-      fromSec.timeline.splice(dragState.timelineIdx, 1);
-    }
+  if (dragState.source === 'timeline' && dragState.timelineIdx != null) {
+    timeline.splice(dragState.timelineIdx, 1);
+    if (dragState.timelineIdx < insertIdx) insertIdx--;
   }
 
-  const existingIdx = sec.timeline.findIndex(t => t.game && t.game.id === g.id);
-  let adjusted = insertIdx;
-  if (existingIdx !== -1) {
-    sec.timeline.splice(existingIdx, 1);
-    if (existingIdx < insertIdx) adjusted--;
+  // Defensive: avoid duplicate entries if this game is somehow already placed
+  const dupIdx = timeline.findIndex(t => t.game && t.game.id === g.id);
+  if (dupIdx !== -1) {
+    timeline.splice(dupIdx, 1);
+    if (dupIdx < insertIdx) insertIdx--;
   }
 
-  sec.timeline.splice(adjusted, 0, { game: g, locked: false });
-  const entry = sec.timeline.find(t => t.game.id === g.id);
-  if (entry) delete entry.correct;
-  delete sec.wrongCount;
+  timeline.splice(insertIdx, 0, { game: g, locked: false });
   dragState = {};
   render();
 }
@@ -624,8 +650,8 @@ function dropAt(sIdx, insertIdx) {
 // ═══════════════════════════════════════════════════════
 let dragState = {};
 
-function onDragStart(e, game, source, sectionIdx, timelineIdx) {
-  dragState = { game, source, sectionIdx, timelineIdx };
+function onDragStart(e, game, source, timelineIdx) {
+  dragState = { game, source, timelineIdx };
   e.dataTransfer.effectAllowed = 'move';
   const el = e.currentTarget;
   setTimeout(() => el.classList.add('dragging'), 0);
@@ -647,11 +673,10 @@ function initPoolDropZone() {
 }
 
 function returnGameToPool() {
-  if (dragState.source !== 'timeline' || dragState.sectionIdx === null) return;
-  const sec = sections[dragState.sectionIdx];
-  if (sec && !sec.complete) {
-    sec.timeline.splice(dragState.timelineIdx, 1);
-    delete sec.wrongCount;
+  if (dragState.source !== 'timeline' || dragState.timelineIdx == null) return;
+  const entry = timeline[dragState.timelineIdx];
+  if (entry && !entry.locked) {
+    timeline.splice(dragState.timelineIdx, 1);
     dragState = {};
     render();
   }
@@ -662,12 +687,12 @@ function returnGameToPool() {
 // ═══════════════════════════════════════════════════════
 let touchState = {};
 
-function onTouchStart(e, game, source, sectionIdx, timelineIdx) {
+function onTouchStart(e, game, source, timelineIdx) {
   if (gameWon || gameLost) return;
   e.preventDefault();
   const touch = e.touches[0];
   const el = e.currentTarget;
-  dragState = { game, source, sectionIdx, timelineIdx };
+  dragState = { game, source, timelineIdx };
 
   const rect = el.getBoundingClientRect();
   const ghost = el.cloneNode(true);
@@ -701,11 +726,15 @@ function onTouchMove(e) {
     if (zone) zone.classList.add('drag-over');
     touchState.lastZone = zone;
   }
+  touchState.lastX = touch.clientX;
+  touchState.lastY = touch.clientY;
+  handleEdgeScroll(touch.clientY);
 }
 
 function onTouchEnd(e) {
   document.removeEventListener('touchmove', onTouchMove);
   document.removeEventListener('touchend', onTouchEnd);
+  clearEdgeScroll();
   const { el, ghost, lastZone, moved } = touchState;
 
   // Tap (no drag movement) on a pool card → open info popup
@@ -722,9 +751,8 @@ function onTouchEnd(e) {
   if (el) el.classList.remove('dragging');
   if (lastZone) {
     lastZone.classList.remove('drag-over');
-    const sIdx = parseInt(lastZone.dataset.sectionIdx, 10);
     const idx = parseInt(lastZone.dataset.insertIdx, 10);
-    if (!isNaN(sIdx) && !isNaN(idx)) dropAt(sIdx, idx);
+    if (!isNaN(idx)) dropAt(idx);
   } else {
     // Check if dropped onto the sidebar pool area
     const touch = e.changedTouches[0];
@@ -735,10 +763,77 @@ function onTouchEnd(e) {
 }
 
 // ═══════════════════════════════════════════════════════
+// AUTO-SCROLL NEAR SCREEN EDGES WHILE DRAGGING
+// ═══════════════════════════════════════════════════════
+const EDGE_ZONE = 70;                // px from top/bottom edge that triggers auto-scroll
+const EDGE_HOLD_MS = 1000;           // dwell time in the zone before scrolling starts
+const EDGE_SCROLL_SPEED = 14;        // px scrolled per animation frame (desktop/mouse)
+const EDGE_SCROLL_SPEED_TOUCH = 56;  // px scrolled per animation frame (touch/mobile) — 4x desktop
+
+let edgeDir = null;
+let edgeHoldTimer = null;
+let edgeScrollRAF = null;
+
+function handleEdgeScroll(clientY) {
+  const vh = window.innerHeight;
+  let dir = null;
+  if (clientY < EDGE_ZONE) dir = 'up';
+  else if (clientY > vh - EDGE_ZONE) dir = 'down';
+
+  if (dir === edgeDir) return; // unchanged — leave any running timer/loop alone
+  clearEdgeScroll();
+  edgeDir = dir;
+  if (dir) {
+    edgeHoldTimer = setTimeout(() => {
+      edgeScrollRAF = requestAnimationFrame(runEdgeScroll);
+    }, EDGE_HOLD_MS);
+  }
+}
+
+function runEdgeScroll() {
+  if (!edgeDir) return;
+  const isTouchDrag = !!touchState.ghost;
+  const speed = isTouchDrag ? EDGE_SCROLL_SPEED_TOUCH : EDGE_SCROLL_SPEED;
+  window.scrollBy(0, edgeDir === 'up' ? -speed : speed);
+  if (isTouchDrag) refreshTouchZoneDuringAutoScroll();
+  edgeScrollRAF = requestAnimationFrame(runEdgeScroll);
+}
+
+function clearEdgeScroll() {
+  if (edgeHoldTimer) { clearTimeout(edgeHoldTimer); edgeHoldTimer = null; }
+  if (edgeScrollRAF) { cancelAnimationFrame(edgeScrollRAF); edgeScrollRAF = null; }
+  edgeDir = null;
+}
+
+// While auto-scrolling during a touch drag the finger isn't moving, so the
+// hovered drop zone has to be re-checked manually as content scrolls past it.
+function refreshTouchZoneDuringAutoScroll() {
+  const { ghost, lastX, lastY, lastZone } = touchState;
+  if (!ghost || lastX == null || lastY == null) return;
+  ghost.style.display = 'none';
+  const target = document.elementFromPoint(lastX, lastY);
+  ghost.style.display = '';
+  const zone = target && target.closest('.tl-drop-zone');
+  if (zone !== lastZone) {
+    if (lastZone) lastZone.classList.remove('drag-over');
+    if (zone) zone.classList.add('drag-over');
+    touchState.lastZone = zone;
+  }
+}
+
+// Desktop native drag-and-drop fires 'dragover' continuously (per spec, even
+// without pointer movement), so edge proximity can be checked the same way.
+document.addEventListener('dragover', e => {
+  if (dragState.game) handleEdgeScroll(e.clientY);
+});
+document.addEventListener('dragend', clearEdgeScroll);
+document.addEventListener('drop', clearEdgeScroll);
+
+// ═══════════════════════════════════════════════════════
 // STATS
 // ═══════════════════════════════════════════════════════
 function renderStats() {
-  const placed = sections.reduce((n, sec) => n + sec.timeline.filter(t => !t.locked).length, 0);
+  const placed = timeline.filter(e => !e.anchor).length;
   const remaining = poolGames.length - placed;
   document.getElementById('stat-placed').textContent = placed;
   document.getElementById('stat-remaining').textContent = remaining;
@@ -750,9 +845,9 @@ function renderStats() {
 }
 
 function updateCheckBtn() {
-  const placed = sections.reduce((n, sec) => n + sec.timeline.filter(t => !t.locked).length, 0);
+  const placed = timeline.filter(e => !e.anchor).length;
   const btn = document.getElementById('check-btn');
-  const allFilled = sections.every(sec => sec.complete || sec.timeline.filter(t => !t.locked).length === SECTION_SIZE - 1);
+  const allFilled = placed === poolGames.length;
   const checksLeft = MAX_CHECKS - checksUsed;
   btn.disabled = !allFilled || gameWon || gameLost;
   if (!gameWon && !gameLost) {
@@ -769,34 +864,26 @@ function checkTimeline() {
   if (gameWon || gameLost) return;
   checksUsed++;
 
-  let newlyCompleted = 0;
+  let newlyLocked = 0;
   let totalWrong = 0;
 
-  sections.forEach(sec => {
-    if (sec.complete) return;
-    let secWrong = 0;
-    sec.timeline.forEach((entry, i) => {
-      const prevYear = i > 0 ? sec.timeline[i - 1].game.y : -Infinity;
-      const nextYear = i < sec.timeline.length - 1 ? sec.timeline[i + 1].game.y : Infinity;
-      entry.correct = entry.game.y >= prevYear && entry.game.y <= nextYear;
-      if (!entry.locked && !entry.correct) secWrong++;
-    });
-
-    if (secWrong === 0 && sec.timeline.length === SECTION_SIZE) {
-      sec.complete = true;
-      sec.wrongCount = 0;
-      sec.timeline.forEach(e => { e.locked = true; });
-      newlyCompleted++;
+  timeline.forEach((entry, i) => {
+    if (entry.locked) return; // anchors & already-confirmed-correct games skip rechecking
+    const prevYear = i > 0 ? timeline[i - 1].game.y : -Infinity;
+    const nextYear = i < timeline.length - 1 ? timeline[i + 1].game.y : Infinity;
+    entry.correct = entry.game.y >= prevYear && entry.game.y <= nextYear;
+    if (entry.correct) {
+      entry.locked = true; // lock correct games in place — only wrong ones stay movable
+      newlyLocked++;
     } else {
-      sec.wrongCount = secWrong;
-      totalWrong += secWrong;
+      totalWrong++;
     }
   });
 
-  const allDone = sections.every(s => s.complete);
-  const outOfAttempts = checksUsed >= MAX_CHECKS && !allDone;
+  const allCorrect = timeline.length === DAILY_COUNT && timeline.every(e => e.locked);
+  const outOfAttempts = checksUsed >= MAX_CHECKS && !allCorrect;
 
-  if (allDone) {
+  if (allCorrect) {
     gameWon = true;
     saveState();
     saveResult();
@@ -808,19 +895,15 @@ function checkTimeline() {
     setMsg('', '');
   } else if (outOfAttempts) {
     gameLost = true;
-    sections.forEach(sec => {
-      if (!sec.complete) {
-        // Save the user's last-check result per game before we sort to reveal correct order
-        sec.timeline.forEach(entry => { entry.userCorrect = entry.correct; });
-        sec.timeline.sort((a, b) => a.game.y - b.game.y);
-        sec.timeline.forEach((entry, i) => {
-          const prevYear = i > 0 ? sec.timeline[i - 1].game.y : -Infinity;
-          const nextYear = i < sec.timeline.length - 1 ? sec.timeline[i + 1].game.y : Infinity;
-          entry.correct = entry.game.y >= prevYear && entry.game.y <= nextYear;
-        });
-        sec.revealed = true;
-      }
+    // Save the user's last-check result per game, then sort the whole timeline to reveal the correct order
+    timeline.forEach(entry => { entry.userCorrect = entry.locked ? true : entry.correct; });
+    timeline.sort((a, b) => a.game.y - b.game.y);
+    timeline.forEach((entry, i) => {
+      const prevYear = i > 0 ? timeline[i - 1].game.y : -Infinity;
+      const nextYear = i < timeline.length - 1 ? timeline[i + 1].game.y : Infinity;
+      entry.correct = entry.game.y >= prevYear && entry.game.y <= nextYear;
     });
+    timelineRevealed = true;
     saveState();
     saveResult();
     render();
@@ -832,10 +915,10 @@ function checkTimeline() {
   } else {
     render();
     const checksLeft = MAX_CHECKS - checksUsed;
-    if (newlyCompleted > 0 && totalWrong === 0) {
-      setMsg(`<strong>${newlyCompleted} section${newlyCompleted > 1 ? 's' : ''} complete!</strong> Keep going — ${checksLeft} attempt${checksLeft !== 1 ? 's' : ''} left.`, 'success');
-    } else if (newlyCompleted > 0) {
-      setMsg(`<strong>${newlyCompleted} section${newlyCompleted > 1 ? 's' : ''} locked!</strong> Still ${totalWrong} wrong. ${checksLeft} attempt${checksLeft !== 1 ? 's' : ''} left.`, 'warning');
+    if (newlyLocked > 0 && totalWrong === 0) {
+      setMsg(`<strong>All placed games are correct!</strong> Place the rest — ${checksLeft} attempt${checksLeft !== 1 ? 's' : ''} left.`, 'success');
+    } else if (newlyLocked > 0) {
+      setMsg(`<strong>${newlyLocked} game${newlyLocked > 1 ? 's' : ''} locked in!</strong> Still ${totalWrong} wrong. ${checksLeft} attempt${checksLeft !== 1 ? 's' : ''} left.`, 'warning');
     } else {
       setMsg(totalWrong === 1
         ? `<strong>1 game</strong> is in the wrong spot. ${checksLeft} attempt${checksLeft !== 1 ? 's' : ''} left!`
@@ -852,43 +935,39 @@ function showEndScreen() {
   document.getElementById('end-screen').style.display = 'block';
   document.getElementById('end-screen').scrollIntoView({ behavior: 'smooth' });
 
-  const completedCount = sections.filter(s => s.complete).length;
+  const correctCount = timeline.filter(e => !e.anchor && e.correct).length;
+  const total = poolGames.length;
   let stars, emoji, msg;
 
   if (gameLost) {
-    stars = completedCount === 0 ? '☆☆☆' : completedCount === 1 ? '★☆☆' : '★★☆';
+    stars = correctCount === 0 ? '☆☆☆' : correctCount < total * 2 / 3 ? '★☆☆' : '★★☆';
     emoji = '💀';
-    msg = completedCount === 0
+    msg = correctCount === 0
       ? 'Better luck next time!'
-      : `${completedCount}/3 section${completedCount > 1 ? 's' : ''} completed`;
+      : `${correctCount}/${total} games placed correctly`;
   } else {
     stars = checksUsed === 1 ? '★★★' : checksUsed === 2 ? '★★☆' : '★☆☆';
     emoji = checksUsed === 1 ? '🏆' : checksUsed <= 2 ? '⭐' : '🕹️';
     msg = checksUsed === 1 ? 'Perfect! First try!' : checksUsed === 2 ? 'Excellent!' : 'Well done!';
   }
 
-  const anchorIds = new Set(sections.map(s => s.anchor.id));
-  const breakdown = sections.map((sec) => {
-    const displayTimeline = sec.revealed
-      ? [...sec.timeline].sort((a, b) => a.game.y - b.game.y)
-      : sec.timeline;
-    const rows = displayTimeline.map(e => {
-      const isAnchor = anchorIds.has(e.game.id);
-      const statusColor = isAnchor ? 'var(--amber)' : (sec.complete ? 'var(--green)' : (e.correct ? 'var(--green)' : 'var(--red)'));
-      const statusIcon = isAnchor ? '★' : (sec.complete || e.correct ? '✓' : '✗');
-      return `<div class="end-row">
-        <div class="er-title">${e.game.t}</div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <div class="er-year" style="color:var(--text-dim)">${e.game.y}</div>
-          <div class="er-status"><span style="color:${statusColor}">${statusIcon}</span></div>
-        </div>
-      </div>`;
-    }).join('');
-    return `<div style="margin-bottom:1rem">${rows}</div>`;
+  const displayTimeline = timelineRevealed
+    ? [...timeline].sort((a, b) => a.game.y - b.game.y)
+    : timeline;
+  const breakdown = displayTimeline.map(e => {
+    const statusColor = e.anchor ? 'var(--amber)' : (e.correct ? 'var(--green)' : 'var(--red)');
+    const statusIcon = e.anchor ? '★' : (e.correct ? '✓' : '✗');
+    return `<div class="end-row">
+      <div class="er-title">${e.game.t}</div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div class="er-year" style="color:var(--text-dim)">${e.game.y}</div>
+        <div class="er-status"><span style="color:${statusColor}">${statusIcon}</span></div>
+      </div>
+    </div>`;
   }).join('');
 
   const subLine = gameLost
-    ? `Out of attempts &nbsp;·&nbsp; ${completedCount}/3 sections correct`
+    ? `Out of attempts &nbsp;·&nbsp; ${correctCount}/${total} games correct`
     : `${msg} &nbsp;·&nbsp; ${checksUsed} check${checksUsed !== 1 ? 's' : ''} used`;
 
   document.getElementById('end-screen').innerHTML = `
@@ -907,12 +986,13 @@ function showEndScreen() {
 function copyShare() {
   const d = new Date();
   const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  const completedCount = sections.filter(s => s.complete).length;
+  const correctCount = timeline.filter(e => !e.anchor && e.correct).length;
+  const total = poolGames.length;
   const stars = gameLost
-    ? (completedCount === 0 ? '☆☆☆' : completedCount === 1 ? '★☆☆' : '★★☆')
+    ? (correctCount === 0 ? '☆☆☆' : correctCount < total * 2 / 3 ? '★☆☆' : '★★☆')
     : (checksUsed === 1 ? '★★★' : checksUsed === 2 ? '★★☆' : '★☆☆');
   const result = gameLost
-    ? `Out of attempts — ${completedCount}/3 sections correct`
+    ? `Out of attempts — ${correctCount}/${total} games correct`
     : `${checksUsed} check${checksUsed !== 1 ? 's' : ''} used`;
   const text = `Pixology — ${dateStr}\n${stars}\n${result}\n\nCan you beat my score?`;
   navigator.clipboard.writeText(text).then(() => {

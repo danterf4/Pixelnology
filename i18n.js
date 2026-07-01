@@ -10,12 +10,11 @@
 
       // How to play modal
       'how.title': 'HOW TO PLAY',
-      'how.1': 'The timeline has <strong>3 anchor games</strong> pre-placed. They divide the timeline into sections — oldest at the top, newest at the bottom.',
+      'how.1': 'The timeline has <strong>3 anchor games</strong> pre-placed as reference points — oldest at the top, newest at the bottom.',
       'how.2': '<strong>Drag games</strong> from the pool into the right spot on the timeline. On mobile, press and hold to drag.',
-      'how.3': 'Place all games in a section before hitting <strong>Check Timeline</strong>.',
-      'how.4': 'If a section is in the right order, it <strong>locks and turns green</strong> — those games are done!',
-      'how.5': 'Fix wrong games in incomplete sections and check again.',
-      'how.6': 'Years are revealed only when a section is <strong>fully correct</strong>!',
+      'how.3': 'Place every game on the timeline, then hit <strong>Check Timeline</strong>.',
+      'how.4': 'Correct games <strong>lock in and turn green</strong>. Wrong ones turn <strong>red</strong> — move them and check again.',
+      'how.5': 'You get <strong>3 checks</strong> total to get every game in the right spot.',
 
       // Index stats & UI
       'stat.attempts':  'Attempts left',
@@ -38,11 +37,11 @@
 
       // About
       'about.hero.title': 'About<br><span>Pixology</span>',
-      'about.hero.sub':   'A daily game timeline puzzle — place video games in chronological order across three eras and see how well you know gaming history.',
+      'about.hero.sub':   'A daily game timeline puzzle — place video games in chronological order and see how well you know gaming history.',
       'about.s1.h':   'What is Pixology?',
       'about.s1.p1':  'Pixology is a <strong>daily browser puzzle</strong> inspired by the love of video game history. Each day a new set of 15 games is drawn from across gaming\'s timeline — from the early 80s all the way to the modern era.',
-      'about.s1.p2':  'The games are split into <strong>three eras</strong>: Early, Mid, and Modern. Each era has one anchor game pre-placed to give you a reference point. Your job is to drag the remaining games into the right chronological slots within each era.',
-      'about.s1.p3':  'You get up to <strong>three checks</strong>. Completed eras lock in and turn green. The catch? Release years are hidden until an era is fully correct — so you\'re playing on memory and intuition alone.',
+      'about.s1.p2':  'The timeline has <strong>3 anchor games</strong> pre-placed as reference points. Your job is to drag the remaining games into the right chronological order.',
+      'about.s1.p3':  'You get up to <strong>three checks</strong>. Correct games lock in and turn green immediately — wrong ones turn red, so you know exactly what to fix before checking again.',
       'about.s2.h':    'Who made it',
       'about.s2.role': 'Creator &amp; Developer',
       'about.s2.bio':  'Pixology is a personal project born from a curiosity about game history and a love of daily puzzle games. Built from scratch with vanilla HTML, CSS, and JavaScript — no frameworks, just code and a lot of game trivia.',
@@ -60,12 +59,11 @@
 
       // How to play modal
       'how.title': 'CÓMO JUGAR',
-      'how.1': 'La línea de tiempo tiene <strong>3 juegos ancla</strong> precolocados. Dividen la línea en secciones — los más antiguos arriba, los más recientes abajo.',
+      'how.1': 'La línea de tiempo tiene <strong>3 juegos ancla</strong> precolocados como puntos de referencia — los más antiguos arriba, los más recientes abajo.',
       'how.2': '<strong>Arrastra juegos</strong> de la lista al lugar correcto en la línea de tiempo. En móvil, mantén presionado para arrastrar.',
-      'how.3': 'Coloca todos los juegos de una sección antes de pulsar <strong>Verificar línea</strong>.',
-      'how.4': 'Si una sección está en el orden correcto, se <strong>bloquea y se vuelve verde</strong> — ¡esos juegos están listos!',
-      'how.5': 'Corrige los juegos incorrectos en las secciones incompletas e inténtalo de nuevo.',
-      'how.6': '¡Los años solo se revelan cuando una sección está <strong>completamente correcta</strong>!',
+      'how.3': 'Coloca todos los juegos en la línea de tiempo y luego pulsa <strong>Verificar línea</strong>.',
+      'how.4': 'Los juegos correctos se <strong>bloquean y se vuelven verdes</strong>. Los incorrectos se ponen en <strong>rojo</strong> — muévelos y vuelve a verificar.',
+      'how.5': 'Tienes <strong>3 verificaciones</strong> en total para colocar todos los juegos en su lugar.',
 
       // Index stats & UI
       'stat.attempts':  'Intentos restantes',
@@ -88,11 +86,11 @@
 
       // About
       'about.hero.title': 'Acerca de<br><span>Pixology</span>',
-      'about.hero.sub':   'Un puzzle diario de línea de tiempo — coloca videojuegos en orden cronológico a través de tres eras y descubre cuánto sabes de la historia de los videojuegos.',
+      'about.hero.sub':   'Un puzzle diario de línea de tiempo — coloca videojuegos en orden cronológico y descubre cuánto sabes de la historia de los videojuegos.',
       'about.s1.h':   '¿Qué es Pixology?',
       'about.s1.p1':  'Pixology es un <strong>puzzle diario en el navegador</strong> inspirado en el amor por la historia de los videojuegos. Cada día se selecciona un nuevo conjunto de 15 juegos de toda la historia del gaming — desde los primeros años 80 hasta la era moderna.',
-      'about.s1.p2':  'Los juegos se dividen en <strong>tres eras</strong>: Clásica, Media y Moderna. Cada era tiene un juego ancla precolocado como referencia. Tu trabajo es arrastrar los juegos restantes a las posiciones cronológicas correctas.',
-      'about.s1.p3':  'Tienes hasta <strong>tres verificaciones</strong>. Las eras completadas se bloquean y se vuelven verdes. ¿El truco? Los años de lanzamiento están ocultos hasta que una era sea totalmente correcta — así que juegas con la memoria y la intuición.',
+      'about.s1.p2':  'La línea de tiempo tiene <strong>3 juegos ancla</strong> precolocados como puntos de referencia. Tu trabajo es arrastrar los juegos restantes al orden cronológico correcto.',
+      'about.s1.p3':  'Tienes hasta <strong>tres verificaciones</strong>. Los juegos correctos se bloquean y se vuelven verdes al instante — los incorrectos se ponen en rojo, así sabrás exactamente qué corregir antes de volver a verificar.',
       'about.s2.h':    'Quién lo hizo',
       'about.s2.role': 'Creador y Desarrollador',
       'about.s2.bio':  'Pixology es un proyecto personal nacido de la curiosidad por la historia del gaming y el amor por los puzzles diarios. Construido desde cero con HTML, CSS y JavaScript — sin frameworks, solo código y mucha trivia de videojuegos.',
