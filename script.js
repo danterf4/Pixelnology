@@ -567,11 +567,7 @@ function makeItemRow(entry, idx) {
     icon.style.color = 'var(--green)';
     right.appendChild(icon);
   } else if (hasFeedback) {
-    // Checked and still wrong — show the year in red plus a remove button
-    const yr = document.createElement('div');
-    yr.className = 'tl-card-year red';
-    yr.textContent = entry.game.y;
-    right.appendChild(yr);
+    // Checked and still wrong — flag it in red without revealing the year (that'd give away the answer)
     const icon = document.createElement('span');
     icon.className = 'tl-status-icon';
     icon.textContent = '✗';
