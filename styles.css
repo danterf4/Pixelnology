@@ -414,6 +414,12 @@ body {
   min-height: 28px;
 }
 
+.pc-platform {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
 .pool-card .pc-check {
   position: absolute;
   top: 5px;
@@ -744,6 +750,8 @@ body {
 
 .tl-card-platform {
   color: var(--text-muted);
+  font-size: 0.825rem; /* same ratio to tl-card-title (1.1rem) as pc-platform is to pc-title */
+  margin-top: 2px;
 }
 
 .tl-card-right {
@@ -755,6 +763,7 @@ body {
 
 .tl-card-year {
   font-family: var(--mono);
+  font-size: 1rem;
 }
 
 .tl-card-year.hidden {
@@ -771,7 +780,6 @@ body {
 
 .tl-card-year.amber {
   color: var(--amber);
-  font-size: 1rem;
 }
 
 .remove-btn {
@@ -1236,6 +1244,7 @@ body.has-sidebar {
     .dock-scroll { padding-bottom: 6px; gap: 6px; }
     .pc-body { padding: 4px 6px 6px; }
     .pool-card .pc-title { font-size: 15px; line-height: 1.15; min-height: 0; -webkit-line-clamp: 1; }
+    .pc-platform { font-size: 0.68rem; margin-top: 1px; }
     .pool-card .pc-check { width: 21px; height: 21px; font-size: 20px; }
 
     /* ── MOBILE VERTICAL TIMELINE CARDS ── */
@@ -1524,11 +1533,18 @@ body.has-sidebar {
 }
 
 .game-popup-title {
-  padding: 14px 16px 18px;
+  padding: 14px 16px 4px;
   font-size: 25px;
   font-weight: 600;
   color: var(--text);
   line-height: 1.4;
+  text-align: center;
+}
+
+.game-popup-platform {
+  padding: 0 16px 18px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
   text-align: center;
 }
 

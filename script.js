@@ -2,7 +2,7 @@
 // CONFIG
 // ═══════════════════════════════════════════════════════
 const WORKER_URL = 'https://autumn-wave-6693.max-andres-rf.workers.dev';
-const DAILY_COUNT = 15;
+const DAILY_COUNT = 8; // 3 pre-placed anchors + 5 unplaced pool games
 const LAUNCH_DATE = '2026-06-20';
 
 // ═══════════════════════════════════════════════════════
@@ -28,6 +28,17 @@ function getDailySeed(dateStr) {
   return (y * 10000 + m * 100 + day) * 7 + 13;
 }
 
+// Incremental puzzle number: launch day is #1, one higher per calendar day since.
+function getPuzzleNumber(dateStr) {
+  const s = dateStr || getActiveDateStr();
+  const [ly, lm, ld] = LAUNCH_DATE.split('-').map(Number);
+  const [y, m, day] = s.split('-').map(Number);
+  const launchUTC = Date.UTC(ly, lm - 1, ld);
+  const activeUTC = Date.UTC(y, m - 1, day);
+  const daysSinceLaunch = Math.round((activeUTC - launchUTC) / 86400000);
+  return daysSinceLaunch + 1;
+}
+
 // ═══════════════════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════════════════
@@ -41,7 +52,6 @@ let timelineRevealed = false; // true once the correct order has been revealed a
 const coverCache = {};
 
 const ANCHOR_COUNT = 3;       // evenly-spaced pre-placed reference games
-const ANCHOR_CHUNK_SIZE = 5;  // DAILY_COUNT / ANCHOR_COUNT — used to pick one anchor per chunk
 const MAX_CHECKS = 3;
 
 // ═══════════════════════════════════════════════════════
@@ -296,7 +306,7 @@ async function init() {
   const d = new Date(ay, am - 1, ad);
   document.getElementById('date-pill').textContent =
     d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  document.getElementById('puzzle-pill').textContent = `Puzzle #${getDailySeed() % 1000}`;
+  document.getElementById('puzzle-pill').textContent = `Puzzle #${getPuzzleNumber()}`;
 
   // Past-puzzle banner
   const banner = document.getElementById('past-puzzle-bar');
@@ -350,7 +360,11 @@ async function init() {
   // already locked, directly into a single chronological timeline.
   timeline = [];
   for (let s = 0; s < ANCHOR_COUNT; s++) {
-    const chunk = allGames.slice(s * ANCHOR_CHUNK_SIZE, (s + 1) * ANCHOR_CHUNK_SIZE);
+    // Evenly split allGames into ANCHOR_COUNT chunks (sizes as equal as DAILY_COUNT allows)
+    // and take the middle game of each — works for any DAILY_COUNT, not just multiples of ANCHOR_COUNT.
+    const chunkStart = Math.floor(s * DAILY_COUNT / ANCHOR_COUNT);
+    const chunkEnd = Math.floor((s + 1) * DAILY_COUNT / ANCHOR_COUNT);
+    const chunk = allGames.slice(chunkStart, chunkEnd);
     const anchor = chunk[Math.floor(chunk.length / 2)];
     timeline.push({ game: anchor, anchor: true, locked: true });
   }
@@ -438,7 +452,8 @@ function renderPool() {
 
     const body = document.createElement('div');
     body.className = 'pc-body';
-    body.innerHTML = `<div class="pc-title">${g.t}</div>`;
+    body.innerHTML = `<div class="pc-title">${g.t}</div>` +
+      (g.p ? `<div class="pc-platform">${g.p}</div>` : '');
 
     div.appendChild(coverDiv);
     div.appendChild(body);
@@ -535,7 +550,8 @@ function makeItemRow(entry, idx) {
 
   const titleWrap = document.createElement('div');
   titleWrap.style.cssText = 'min-width:0;flex:1;';
-  titleWrap.innerHTML = `<div class="tl-card-title">${entry.game.t}</div>`;
+  titleWrap.innerHTML = `<div class="tl-card-title">${entry.game.t}</div>` +
+    (entry.game.p ? `<div class="tl-card-platform">${entry.game.p}</div>` : '');
   left.appendChild(titleWrap);
 
   const right = document.createElement('div');
@@ -1024,8 +1040,10 @@ function openGamePopup(game) {
   const overlay = document.getElementById('game-popup-overlay');
   const coverEl = document.getElementById('game-popup-cover');
   const titleEl = document.getElementById('game-popup-title');
+  const platformEl = document.getElementById('game-popup-platform');
 
   titleEl.textContent = game.t;
+  if (platformEl) platformEl.textContent = game.p || '';
 
   const url = coverCache[game.id];
   if (url && url !== 'loading' && url !== 'none') {
