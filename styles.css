@@ -1227,7 +1227,7 @@ body.has-sidebar {
   justify-content: center;
 }
 
-.timeline-actions-panel.mobile {
+.timeline-actions-panel .mobile {
   display: none;
 }
 
