@@ -2,7 +2,7 @@
 // CONFIG
 // ═══════════════════════════════════════════════════════
 const WORKER_URL = 'https://autumn-wave-6693.max-andres-rf.workers.dev';
-const DAILY_COUNT = 8; // 3 pre-placed anchors + 5 unplaced pool games
+const DAILY_COUNT = 10; // 2 pre-placed anchors + 8 unplaced pool games
 const LAUNCH_DATE = '2026-06-20';
 
 // ═══════════════════════════════════════════════════════
@@ -51,7 +51,7 @@ let gameLost = false;
 let timelineRevealed = false; // true once the correct order has been revealed after a loss
 const coverCache = {};
 
-const ANCHOR_COUNT = 3;       // evenly-spaced pre-placed reference games
+const ANCHOR_COUNT = 2;       // evenly-spaced pre-placed reference games
 const MAX_CHECKS = 3;
 
 // ═══════════════════════════════════════════════════════
@@ -448,8 +448,7 @@ function renderPool() {
 
     const body = document.createElement('div');
     body.className = 'pc-body';
-    body.innerHTML = `<div class="pc-title">${g.t}</div>` +
-      (g.p ? `<div class="pc-platform">${g.p}</div>` : '');
+    body.innerHTML = `<div class="pc-title">${g.t}</div>`;
 
     div.appendChild(coverDiv);
     div.appendChild(body);
@@ -546,8 +545,7 @@ function makeItemRow(entry, idx) {
 
   const titleWrap = document.createElement('div');
   titleWrap.style.cssText = 'min-width:0;flex:1;';
-  titleWrap.innerHTML = `<div class="tl-card-title">${entry.game.t}</div>` +
-    (entry.game.p ? `<div class="tl-card-platform">${entry.game.p}</div>` : '');
+  titleWrap.innerHTML = `<div class="tl-card-title">${entry.game.t}</div>`;
   left.appendChild(titleWrap);
 
   const right = document.createElement('div');
