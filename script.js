@@ -317,8 +317,8 @@ async function init() {
   }
 
   document.getElementById('how-toggle').addEventListener('click', toggleHow);
-  document.getElementById('check-btn').addEventListener('click', checkTimeline);
-  document.getElementById('clear-btn').addEventListener('click', clearAll);
+  document.querySelectorAll('#check-btn, #check-btn-mobile').forEach(btn => btn.addEventListener('click', checkTimeline));
+  document.querySelectorAll('#clear-btn, #clear-btn-mobile').forEach(btn => btn.addEventListener('click', clearAll));
 
   // Restore today's session if it exists
   if (loadState()) {
@@ -853,15 +853,18 @@ function renderStats() {
 
 function updateCheckBtn() {
   const placed = timeline.filter(e => !e.anchor).length;
-  const btn = document.getElementById('check-btn');
+  const btns = document.querySelectorAll('#check-btn, #check-btn-mobile');
   const allFilled = placed === poolGames.length;
   const checksLeft = MAX_CHECKS - checksUsed;
-  btn.disabled = !allFilled || gameWon || gameLost;
-  if (!gameWon && !gameLost) {
-    btn.textContent = checksLeft <= MAX_CHECKS && checksUsed > 0
-      ? `Check timeline (${checksLeft} left)`
-      : 'Check timeline';
-  }
+  const label = checksLeft <= MAX_CHECKS && checksUsed > 0
+    ? `Check timeline (${checksLeft} left)`
+    : 'Check timeline';
+  btns.forEach(btn => {
+    btn.disabled = !allFilled || gameWon || gameLost;
+    if (!gameWon && !gameLost) {
+      btn.textContent = label;
+    }
+  });
 }
 
 // ═══════════════════════════════════════════════════════
