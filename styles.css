@@ -1227,7 +1227,7 @@ body.has-sidebar {
   justify-content: center;
 }
 
-.timeline-actions-panel .mobile {
+.timeline-actions-panel.mobile {
   display: none;
 }
 
@@ -1707,6 +1707,10 @@ body.has-sidebar {
   #howto {
     text-align: center !important;
   }
+
+  .timeline-actions-panel.mobile {
+  display: none;
+}
 }
 
 /* ── GAME INFO POPUP ── */
