@@ -30,6 +30,7 @@
         '<button class="lang-toggle-btn' + (lang === 'en' ? ' active' : '') + '" data-lang="en">EN</button>' +
         '<button class="lang-toggle-btn' + (lang === 'es' ? ' active' : '') + '" data-lang="es">ES</button>' +
       '</div>' +
+      '<a href="https://ko-fi.com/gameologysupport" target="_blank" rel="noopener" class="kofi-nav-btn">Support</a>' +
     '</nav>';
 
   header.querySelectorAll('.lang-toggle-btn').forEach(function (btn) {

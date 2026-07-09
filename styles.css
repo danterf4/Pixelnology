@@ -170,6 +170,28 @@ body {
   background: var(--accent-bg);
 }
 
+/* ── KO-FI NAV BUTTON ── */
+.kofi-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent-bg);
+  background: var(--accent);
+  text-decoration: none;
+  padding: 5px 12px;
+  border-radius: var(--radius);
+  margin-left: 8px;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.kofi-nav-btn:hover {
+  background: var(--accent-light);
+}
+
 /* ── SIDEBAR DATE ROW ── */
 .dock-meta-row {
   display: flex;
@@ -1408,6 +1430,12 @@ body.has-sidebar {
 
   .site-nav-link {
     font-size: .8rem;
+  }
+
+  .kofi-nav-btn {
+    font-size: .75rem;
+    padding: .2rem .5rem;
+    margin-left: 0;
   }
 
   .lang-toggle {

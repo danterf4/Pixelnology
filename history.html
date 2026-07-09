@@ -299,7 +299,6 @@
       if (result) {
         // Played and finished — show score + collapsible breakdown
         const { stars, checksUsed, gameLost, completedCount } = result;
-        const emoji   = gameLost ? '💀' : (checksUsed === 1 ? '🏆' : checksUsed <= 2 ? '⭐' : '🕹️');
         const subLine = gameLost
           ? `Out of attempts · ${completedCount}/3 sections correct`
           : `${checksUsed} check${checksUsed !== 1 ? 's' : ''} used · ${completedCount}/3 sections`;
@@ -335,7 +334,6 @@
         return `
           <div class="history-entry played">
             <div class="he-header expandable" data-idx="${idx}">
-              <div class="he-emoji">${emoji}</div>
               <div class="he-info">
                 <div class="he-date">${formatDate(dateStr)}${todayBadge}</div>
                 <div class="he-sub">${subLine}</div>
@@ -356,14 +354,12 @@
           ? (state.sections || []).reduce((n, s) => n + s.timeline.filter(t => !t.locked).length, 0)
           : 0;
         const subLine  = inProgress ? `In progress · ${placed} game${placed !== 1 ? 's' : ''} placed` : 'Not played yet';
-        const emoji    = inProgress ? '⏳' : '🎮';
         const href     = isToday ? 'index.html' : `index.html?date=${dateStr}`;
         const btnLabel = isToday ? 'Play today' : (inProgress ? 'Continue' : 'Play');
 
         return `
           <div class="history-entry unplayed">
             <a class="he-header" href="${href}">
-              <div class="he-emoji">${emoji}</div>
               <div class="he-info">
                 <div class="he-date">${formatDate(dateStr)}${todayBadge}</div>
                 <div class="he-sub">${subLine}</div>

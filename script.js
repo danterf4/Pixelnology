@@ -216,7 +216,6 @@ function renderHistoryView() {
 
     if (result) {
       const { stars, checksUsed: cu, gameLost: gl } = result;
-      const emoji   = gl ? '💀' : (cu===1?'🏆':cu<=2?'⭐':'🕹️');
       const hasNewFormat = result.total !== undefined;
       const subLine = hasNewFormat
         ? (gl ? `Out of attempts · ${result.correctCount}/${result.total} games correct`
@@ -252,7 +251,6 @@ function renderHistoryView() {
 
       return `<div class="history-entry played">
         <div class="he-header expandable" data-idx="${idx}">
-          <div class="he-emoji">${emoji}</div>
           <div class="he-info"><div class="he-date">${hFmtDate(dateStr)}${todayBadge}</div><div class="he-sub">${subLine}</div></div>
           <div class="he-right"><div class="he-stars">${stars}</div>${breakdownHtml?'<div class="he-chevron">›</div>':''}</div>
         </div>
@@ -266,12 +264,10 @@ function renderHistoryView() {
                            : (state.sections||[]).reduce((n,s)=>n+s.timeline.filter(t=>!t.locked).length,0))
         : 0;
       const subLine    = inProgress ? `In progress · ${placed} game${placed!==1?'s':''} placed` : 'Not played yet';
-      const emoji      = inProgress ? '⏳' : '🎮';
       const href       = isToday ? 'index.html' : `index.html?date=${dateStr}`;
       const btnLabel   = isToday ? 'Play today' : (inProgress ? 'Continue' : 'Play');
       return `<div class="history-entry unplayed">
         <a class="he-header" href="${href}">
-          <div class="he-emoji">${emoji}</div>
           <div class="he-info"><div class="he-date">${hFmtDate(dateStr)}${todayBadge}</div><div class="he-sub">${subLine}</div></div>
           <div class="he-right"><span class="he-play-btn">${btnLabel} →</span></div>
         </a>
@@ -313,7 +309,7 @@ async function init() {
   if (banner && isPast) {
     const updateBanner = () => {
       const t = window.i18n ? window.i18n.t('past.banner') : 'past.banner';
-      banner.innerHTML = '📅 ' + t;
+      banner.innerHTML = t;
     };
     updateBanner();
     banner.style.display = 'flex';
@@ -949,18 +945,16 @@ function showEndScreen() {
 
   const correctCount = timeline.filter(e => !e.anchor && e.correct).length;
   const total = poolGames.length;
-  let stars, emoji, msg;
+  let stars, msg;
 
   if (gameLost) {
     // Stars reflect attempts used, not partial correctness — a loss is always 0 stars.
     stars = '☆☆☆';
-    emoji = '💀';
     msg = correctCount === 0
       ? 'Better luck next time!'
       : `${correctCount}/${total} games placed correctly`;
   } else {
     stars = checksUsed === 1 ? '★★★' : checksUsed === 2 ? '★★☆' : '★☆☆';
-    emoji = checksUsed === 1 ? '🏆' : checksUsed <= 2 ? '⭐' : '🕹️';
     msg = checksUsed === 1 ? 'Perfect! First try!' : checksUsed === 2 ? 'Excellent!' : 'Well done!';
   }
 
@@ -985,7 +979,6 @@ function showEndScreen() {
 
   document.getElementById('end-screen').innerHTML = `
     <div class="end-card">
-      <div class="end-emoji">${emoji}</div>
       <div class="end-score">${stars}</div>
       <div class="end-score-sub">${subLine}</div>
       <div class="end-breakdown">${breakdown}</div>
