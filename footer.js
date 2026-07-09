@@ -16,21 +16,4 @@
 
   var placeholder = document.getElementById('site-footer');
   if (placeholder) placeholder.replaceWith(footer);
-
-  // Ko-fi floating widget
-  if (!window.kofiWidgetOverlay) {
-    var kofiScript = document.createElement('script');
-    kofiScript.src = 'https://storage.ko-fi.com/cdn/scripts/overlay-widget.js';
-    kofiScript.onload = function () {
-      if (window.kofiWidgetOverlay) {
-        window.kofiWidgetOverlay.draw('gameologysupport', {
-          'type': 'floating-chat',
-          'floating-chat.donateButton.text': 'Support Me',
-          'floating-chat.donateButton.background-color': '#69B437',
-          'floating-chat.donateButton.text-color': '#0E3338'
-        });
-      }
-    };
-    document.body.appendChild(kofiScript);
-  }
 })();
