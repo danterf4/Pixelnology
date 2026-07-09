@@ -1065,7 +1065,14 @@ function initDockArrows() {
     if (isDesktop()) {
       left.classList.toggle('hidden', scroll.scrollTop <= 4);
       right.classList.toggle('hidden', scroll.scrollTop >= scroll.scrollHeight - scroll.clientHeight - 4);
+
     } else {
+      const leftIcon = left.querySelector('span');
+      if (leftIcon) leftIcon.textContent = 'keyboard_arrow_left';
+
+      const rightIcon = right.querySelector('span');
+      if (rightIcon) rightIcon.textContent = 'keyboard_arrow_right';
+
       left.classList.toggle('hidden', scroll.scrollLeft <= 4);
       right.classList.toggle('hidden', scroll.scrollLeft >= scroll.scrollWidth - scroll.clientWidth - 4);
     }
