@@ -233,32 +233,41 @@ body {
   background: var(--accent-bg);
 }
 
-  /* ── HOW TO PLAY (compact pill, lives in dock-meta-row) ── */
-  .how-bar {
-    /* display: inline-flex; */
-    align-items: center;
-    gap: 5px;
-    font-size: 14px;
-    font-family: var(--mono);
-    padding: 3px 10px;
-    border-radius: 4px;
-    border: 1px solid var(--amber);
-    color: var(--amber);
-    background: var(--amber-bg);
-    margin-left: auto;
-    cursor: pointer;
-    user-select: none;
-    transition: background 0.15s, color 0.15s;
-    white-space: nowrap;
-    margin-top: 1rem;
-    width: 100%;
-  }
-  .how-bar:hover { background: var(--amber); color: #1a1209; }
-  .how-bar .how-icon { font-size: 14px; line-height: 1; }
+/* ── HOW TO PLAY (compact pill, lives in dock-meta-row) ── */
+.how-bar {
+  /* display: inline-flex; */
+  align-items: center;
+  gap: 5px;
+  font-size: 14px;
+  font-family: var(--mono);
+  padding: 3px 10px;
+  border-radius: 4px;
+  border: 1px solid var(--amber);
+  color: var(--amber);
+  background: var(--amber-bg);
+  margin-left: auto;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+  margin-top: 1rem;
+  width: 100%;
+}
 
-  .how-bar > p{
-    text-align: center;
-  }
+.how-bar:hover {
+  background: var(--amber);
+  color: #1a1209;
+}
+
+.how-bar .how-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.how-bar>p {
+  text-align: center;
+}
+
 /* Modal overlay */
 .how-overlay {
   position: fixed;
@@ -1161,13 +1170,13 @@ body.has-sidebar {
 .dock-scroll::-webkit-scrollbar-track {
   background: var(--surface2);
   border-radius: 999px;
-      display: none;
+  display: none;
 }
 
 .dock-scroll::-webkit-scrollbar-thumb {
   background: var(--accent);
   border-radius: 999px;
-      display: none;
+  display: none;
 }
 
 .dock-scroll::-webkit-scrollbar-button {
@@ -1218,73 +1227,323 @@ body.has-sidebar {
   justify-content: center;
 }
 
-  /* ── MOBILE ── */
-  @media (max-width: 560px) {
-    .stats-row { grid-template-columns: repeat(3, 1fr); gap: 6px; }
-    .stat-val { font-size: 31px; }
-    .site-header { flex-wrap: wrap; gap: 8px; }
-    .actions-row { flex-direction: column; }
-    .btn { width: 100%; text-align: center; }
-    .end-card { padding: 1.25rem; }
-    body.has-sidebar { padding-bottom: 230px; }
-    body.has-sidebar .site-footer { margin-bottom: 300px; }
-    .pool-card { width: 91px; }
-    .pc-cover { height: 91px; }
+.timeline-actions-panel.mobile {
+  display: none;
+}
 
-    /* ── COMPACT MOBILE BOTTOM DOCK ── */
-    .bottom-dock { padding: 6px 0 8px; }
-    .dock-meta-row { margin-bottom: 6px; gap: 4px; }
-    .dock-meta-row .pill { font-size: 11px; padding: 2px 7px; }
-    .dock-header { margin-bottom: 4px; }
-    .dock-label { font-size: 11px; }
-    .dock-count { font-size: 11px; padding: 1px 6px; }
-    .how-bar { padding: 3px 8px; font-size: 11px; gap: 3px; margin-top: 1rem; text-align: center;}
-    .how-bar .how-icon { font-size: 11px; }
-    .dock-arrow { width: 26px; height: 26px; font-size: 18px; }
-    .dock-scroll { padding-bottom: 6px; gap: 6px; }
-    .pc-body { padding: 4px 6px 6px; }
-    .pool-card .pc-title { font-size: 15px; line-height: 1.15; min-height: 0; -webkit-line-clamp: 1; }
-    .pc-platform { font-size: 0.68rem; margin-top: 1px; }
-    .pool-card .pc-check { width: 21px; height: 21px; font-size: 20px; }
-
-    /* ── MOBILE VERTICAL TIMELINE CARDS ── */
-    .tl-card {
-      flex-direction: column;
-      align-items: stretch;
-      padding: 0;
-      overflow: hidden;
-    }
-    .tl-card-left {
-      flex-direction: column !important;
-      align-items: stretch !important;
-      gap: 0 !important;
-      flex: 1 !important;
-    }
-    .tl-thumb {
-      width: 50%;
-      height: auto;
-      aspect-ratio: 3 / 4;
-      border-radius: 6px;
-      margin: 0 auto;
-      flex-shrink: 0;
-    }
-    .tl-thumb img {
-      object-fit: cover;
-    }
-    .tl-card-title {
-      white-space: normal;
-      text-align: center;
-      padding: 3px 6px;
-      font-size: 15px;
-      line-height: 1.2;
-    }
-    .tl-card-year { display: none; }
-    .tl-card-right {
-      width: 100%;
-      padding: 0 6px 4px;
-      justify-content: space-between;
-    }
+/* ── MOBILE ── */
+@media (max-width: 560px) {
+  .stats-row {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
   }
+
+  .stat-val {
+    font-size: 31px;
+  }
+
+  .site-header {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .actions-row {
+    flex-direction: column;
+  }
+
+  .btn {
+    width: 100%;
+    text-align: center;
+  }
+
+  .end-card {
+    padding: 1.25rem;
+  }
+
+  body.has-sidebar {
+    padding-bottom: 230px;
+  }
+
+  body.has-sidebar .site-footer {
+    margin-bottom: 300px;
+  }
+
+  .pool-card {
+    width: 91px;
+  }
+
+  .pc-cover {
+    height: 91px;
+  }
+
+  /* ── COMPACT MOBILE BOTTOM DOCK ── */
+  .bottom-dock {
+    padding: 6px 0 8px;
+  }
+
+  .dock-meta-row {
+    margin-bottom: 6px;
+    gap: 4px;
+  }
+
+  .dock-meta-row .pill {
+    font-size: 11px;
+    padding: 2px 7px;
+  }
+
+  .dock-header {
+    margin-bottom: 4px;
+  }
+
+  .dock-label {
+    font-size: 11px;
+  }
+
+  .dock-count {
+    font-size: 11px;
+    padding: 1px 6px;
+  }
+
+  .how-bar {
+    padding: 3px 8px;
+    font-size: 11px;
+    gap: 3px;
+    margin-top: 1rem;
+    text-align: center;
+  }
+
+  .how-bar .how-icon {
+    font-size: 11px;
+  }
+
+  .dock-arrow {
+    width: 26px;
+    height: 26px;
+    font-size: 18px;
+  }
+
+  .dock-scroll {
+    padding-bottom: 6px;
+    gap: 6px;
+  }
+
+  .pc-body {
+    padding: 4px 6px 6px;
+  }
+
+  .pool-card .pc-title {
+    font-size: 15px;
+    line-height: 1.15;
+    min-height: 0;
+    -webkit-line-clamp: 1;
+  }
+
+  .pool-card .pc-check {
+    width: 21px;
+    height: 21px;
+    font-size: 20px;
+  }
+
+  /* ── MOBILE VERTICAL TIMELINE CARDS ── */
+  .tl-card {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .tl-card-left {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0 !important;
+    flex: 1 !important;
+  }
+
+  .tl-thumb {
+    width: 50%;
+    height: auto;
+    aspect-ratio: 3 / 4;
+    border-radius: 6px;
+    margin: 0 auto;
+    flex-shrink: 0;
+  }
+
+  .tl-thumb img {
+    object-fit: cover;
+  }
+
+  .tl-card-title {
+    white-space: normal;
+    text-align: center;
+    padding: 3px 6px;
+    font-size: 15px;
+    line-height: 1.2;
+  }
+
+  .tl-card-year {
+    display: none;
+  }
+
+  .tl-card-right {
+    width: 100%;
+    padding: 0 6px 4px;
+    justify-content: space-between;
+  }
+
+  .logo {
+    font-size: 1rem;
+  }
+
+  .logo-wrap {
+    align-items: flex-start;
+  }
+
+  .logo-sub {
+    font-size: .25rem;
+  }
+
+  .site-nav-link.active {
+    padding: .1rem .3rem;
+  }
+
+  .site-nav-link {
+    font-size: .8rem;
+  }
+
+  .lang-toggle {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+  }
+
+  .lang-toggle-btn {
+    font-size: .5rem;
+    padding: .1rem .2rem;
+  }
+
+  .site-header {
+    padding: 1rem 0 .5rem 0;
+    margin-bottom: .5rem;
+  }
+
+  .stat-card {
+    padding: .2rem;
+  }
+
+  .stat-val {
+    font-size: 1.2rem;
+    margin: 0;
+  }
+
+  .stat-lbl {
+    font-size: .6rem;
+    line-height: 1;
+    margin: 0;
+    text-transform: uppercase;
+  }
+
+  .stats-row,
+  .progress-bar-wrap {
+    margin-bottom: .3rem;
+  }
+
+  .timeline-area {
+    padding: .3rem;
+  }
+
+  .timeline-area .section-label {
+    font-size: .6rem;
+    letter-spacing: 0;
+    text-align: center;
+    margin-bottom: .3rem !important;
+  }
+
+  .tl-year-col {
+    position: absolute;
+    top: .3rem;
+    right: .3rem;
+    font-size: 1rem;
+    background-color: var(--bg);
+    padding: .1rem .3rem;
+    border-radius: 4px;
+    border: 1px solid;
+    border-color: #91DA73;
+  }
+
+  .tl-dot.anchor,
+  .tl-spine,
+  .tl-gap-line {
+    display: none;
+  }
+
+  .tl-drop-zone {
+    margin: 0;
+  }
+
+  .page {
+    padding: 0 1rem;
+  }
+
+  .timeline-actions-panel {
+    /* position: fixed;
+    bottom: .6rem;
+    left: 1rem;
+    z-index: 999999999;
+    opacity: 100;
+    width: calc(100% - 2rem); */
+    display: none;
+  }
+
+  .how-bar {
+    position: absolute;
+    top: 0;
+    left: 35%;
+    width: 8rem;
+    margin-top: .5rem;
+    padding: .1rem;
+  }
+
+  .dock-inner {
+    height: fit-content;
+  }
+
+  .timeline-actions-panel.mobile {
+    display: flex;
+  }
+
+  .dock-count,
+  .dock-header {
+    display: inline-block;
+  }
+
+  .dock-count {
+    margin: 0;
+    margin-left: 0rem;
+    width: fit-content;
+  }
+
+  .dock-header {
+    padding: 0 !important;
+    margin: 0;
+  }
+
+  .bottom-dock {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    padding: 0;
+  }
+
+  .dock-inner{
+    padding: 1rem;
+  }
+
+  #dock-arrow-right{
+    right: 0;
+    width: 30px;
+    height: 30px;
+  }
+
+}
 
 
 
@@ -1445,9 +1704,13 @@ body.has-sidebar {
     flex: none;
   }
 
-  #howto{
-        text-align: center !important;
+  #howto {
+    text-align: center !important;
   }
+
+  .timeline-actions-panel.mobile {
+  display: none;
+}
 }
 
 /* ── GAME INFO POPUP ── */
