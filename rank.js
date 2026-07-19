@@ -1,9 +1,17 @@
 // ═══════════════════════════════════════════════════════
-// CONFIG
+// RANK 'EM — daily challenge: order 6 games from highest to
+// lowest average(Metacritic Metascore, Metacritic User Score).
+// Structurally mirrors script.js's Timeline game (same drag/check/
+// lock loop, same evenly-spaced pre-placed anchors), swapping
+// "release year, ascending" for "average score, descending" as the
+// thing being guessed. 2 anchors are pre-placed as reference points,
+// leaving 4 games for the player to rank.
 // ═══════════════════════════════════════════════════════
 const WORKER_URL = 'https://autumn-wave-6693.max-andres-rf.workers.dev';
-const DAILY_COUNT = 10; // 2 pre-placed anchors + 8 unplaced pool games
-const LAUNCH_DATE = '2026-06-20';
+const DAILY_COUNT = 6; // 2 pre-placed anchors + 4 unplaced pool games
+const ANCHOR_COUNT = 2;
+const MAX_CHECKS = 3;
+const LAUNCH_DATE = '2026-07-18';
 
 // ═══════════════════════════════════════════════════════
 // DATE HELPERS
@@ -25,10 +33,11 @@ function getActiveDateStr() {
 function getDailySeed(dateStr) {
   const s = dateStr || getActiveDateStr();
   const [y, m, day] = s.split('-').map(Number);
-  return (y * 10000 + m * 100 + day) * 7 + 13;
+  // Different multiplier from the Timeline game's seed so the two daily
+  // puzzles don't happen to draw the exact same "random" ordering.
+  return (y * 10000 + m * 100 + day) * 11 + 29;
 }
 
-// Incremental puzzle number: launch day is #1, one higher per calendar day since.
 function getPuzzleNumber(dateStr) {
   const s = dateStr || getActiveDateStr();
   const [ly, lm, ld] = LAUNCH_DATE.split('-').map(Number);
@@ -43,42 +52,35 @@ function getPuzzleNumber(dateStr) {
 // STATE
 // ═══════════════════════════════════════════════════════
 let allGames = [];
-let timeline = []; // flat, ordered: [{game, anchor, locked, correct, userCorrect}, ...]
-let poolGames = []; // all non-anchor games
+let timeline = []; // flat, ordered: [{game, anchor, locked, correct, userCorrect}, ...] — index 0 = highest score
+let poolGames = [];
 let checksUsed = 0;
 let gameWon = false;
 let gameLost = false;
-let timelineRevealed = false; // true once the correct order has been revealed after a loss
+let timelineRevealed = false;
 const coverCache = {};
-
-const ANCHOR_COUNT = 2;       // evenly-spaced pre-placed reference games
-const MAX_CHECKS = 3;
 
 // ═══════════════════════════════════════════════════════
 // PERSISTENCE
 // ═══════════════════════════════════════════════════════
 function getSaveKey() {
-  return 'pixelnology_state_' + getActiveDateStr();
+  return 'pixelnology_rank_state_' + getActiveDateStr();
 }
 
-// Lightweight results store — one entry per completed date, read by the
-// Previous Challenges view (renderHistoryView, below).
-const RESULTS_KEY = 'pixelnology_results';
+const RESULTS_KEY = 'pixelnology_rank_results';
 
 function saveResult() {
   try {
     const correctCount = timeline.filter(e => !e.anchor && e.correct).length;
     const total = poolGames.length;
-    // Stars reflect attempts used, not partial correctness — a loss is always 0 stars.
     const stars = gameLost
       ? '☆☆☆'
       : (checksUsed === 1 ? '★★★' : checksUsed === 2 ? '★★☆' : '★☆☆');
     const results = JSON.parse(localStorage.getItem(RESULTS_KEY) || '{}');
     results[getActiveDateStr()] = { stars, checksUsed, gameLost, correctCount, total };
     localStorage.setItem(RESULTS_KEY, JSON.stringify(results));
-    console.log('[Pixelnology] saveResult OK:', getActiveDateStr(), results[getActiveDateStr()]);
   } catch (e) {
-    console.error('[Pixelnology] saveResult FAILED:', e);
+    console.error('[Pixelnology Rank] saveResult FAILED:', e);
   }
 }
 
@@ -99,25 +101,11 @@ function saveState() {
 
 function loadState() {
   try {
-    // One-time migration: move old single-key state to per-date key if it matches today
-    const oldKey = 'pixelnology_state';
-    const oldRaw = localStorage.getItem(oldKey);
-    if (oldRaw && getActiveDateStr() === getTodayStr()) {
-      try {
-        const old = JSON.parse(oldRaw);
-        if (old.seed === getDailySeed() && !localStorage.getItem(getSaveKey())) {
-          old.date = getTodayStr();
-          localStorage.setItem(getSaveKey(), JSON.stringify(old));
-        }
-      } catch (e) {}
-      localStorage.removeItem(oldKey);
-    }
-
     const raw = localStorage.getItem(getSaveKey());
     if (!raw) return false;
     const s = JSON.parse(raw);
     if (s.date !== getActiveDateStr()) return false;
-    if (!s.timeline) return false; // save from before the single-timeline rework — start fresh
+    if (!s.timeline) return false;
     allGames         = s.allGames;
     timeline         = s.timeline;
     checksUsed       = s.checksUsed;
@@ -132,255 +120,34 @@ function loadState() {
 }
 
 // ═══════════════════════════════════════════════════════
-// HISTORY VIEW ("Previous Challenges")
-// Shared by both daily games — Timeline results live under
-// pixelnology_results / pixelnology_state_*, Rank 'Em's under
-// pixelnology_rank_results / pixelnology_rank_state_*. A small tab
-// switcher toggles which one is rendered into #history-root.
-// ═══════════════════════════════════════════════════════
-const RANK_LAUNCH_DATE = '2026-07-18'; // must match rank.js's own LAUNCH_DATE
-
-const HISTORY_MODES = {
-  daily: {
-    resultsKey: RESULTS_KEY,
-    stateKeyPrefix: 'pixelnology_state_',
-    launchDate: LAUNCH_DATE,
-    valueOf: g => g.y,
-    formatValue: v => String(v),
-    sortAsc: true,  // revealed order is chronological, oldest first
-    playHref: (dateStr, isToday) => isToday ? 'index.html' : `index.html?date=${dateStr}`,
-    legacySections: true, // Timeline predates the flat-timeline format; Rank 'Em never had a "sections" format
-  },
-  rank: {
-    resultsKey: 'pixelnology_rank_results',
-    stateKeyPrefix: 'pixelnology_rank_state_',
-    launchDate: RANK_LAUNCH_DATE,
-    valueOf: g => g.avg,
-    formatValue: v => v.toFixed(2),
-    sortAsc: false, // revealed order is best score first
-    playHref: (dateStr, isToday) => isToday ? 'rank.html' : `rank.html?date=${dateStr}`,
-    legacySections: false,
-  }
-};
-
-let activeHistoryMode = 'daily';
-
-function renderHistoryView(mode) {
-  activeHistoryMode = mode || activeHistoryMode || 'daily';
-  const cfg = HISTORY_MODES[activeHistoryMode];
-
-  document.title = 'Previous Challenges — Gameology';
-  document.body.classList.remove('has-sidebar');
-  document.getElementById('game-view').style.display = 'none';
-  document.getElementById('history-view').style.display = 'block';
-  document.getElementById('bottom-dock').style.display = 'none';
-  document.body.style.paddingBottom = '0';
-
-  document.querySelectorAll('.history-tab-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.tab === activeHistoryMode);
-  });
-
-  const HL = ['Early Era', 'Mid Era', 'Modern Era'];
-
-  function hGetResults() {
-    try { return JSON.parse(localStorage.getItem(cfg.resultsKey) || '{}'); } catch (e) { return {}; }
-  }
-  function hGetFullState(dateStr) {
-    try { const r = localStorage.getItem(cfg.stateKeyPrefix + dateStr); return r ? JSON.parse(r) : null; } catch (e) { return null; }
-  }
-  function hGetAllDates() {
-    const dates = [], today = getTodayStr();
-    let cur = new Date(cfg.launchDate + 'T12:00:00');
-    const end = new Date(today + 'T12:00:00');
-    while (cur <= end) {
-      dates.push(cur.getFullYear() + '-' + String(cur.getMonth()+1).padStart(2,'0') + '-' + String(cur.getDate()).padStart(2,'0'));
-      cur.setDate(cur.getDate() + 1);
-    }
-    return dates.reverse();
-  }
-  function hFmtDate(iso) {
-    const [y, m, d] = iso.split('-').map(Number);
-    return new Date(y, m-1, d).toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric', year:'numeric' });
-  }
-
-  const root    = document.getElementById('history-root');
-  const today   = getTodayStr();
-  const dates   = hGetAllDates();
-  const results = hGetResults();
-
-  const finished   = Object.values(results);
-  const total      = dates.length;
-  const played     = finished.length;
-  const wins       = finished.filter(r => !r.gameLost).length;
-  const winPct     = played ? Math.round((wins / played) * 100) + '%' : '—';
-  const perfect    = finished.filter(r => !r.gameLost && r.checksUsed === 1).length;
-  const avgChecks  = played ? (finished.reduce((a, r) => a + (r.checksUsed||0), 0) / played).toFixed(1) : '—';
-
-  const summaryHtml = `<div class="history-summary">
-    <div class="hs-card"><div class="hs-val">${total}</div><div class="hs-lbl">Total</div></div>
-    <div class="hs-card"><div class="hs-val">${played}</div><div class="hs-lbl">Played</div></div>
-    <div class="hs-card"><div class="hs-val">${winPct}</div><div class="hs-lbl">Win rate</div></div>
-    <div class="hs-card"><div class="hs-val">${perfect}</div><div class="hs-lbl">Perfect</div></div>
-    <div class="hs-card"><div class="hs-val">${avgChecks}</div><div class="hs-lbl">Avg checks</div></div>
-  </div>`;
-
-  const entriesHtml = dates.map((dateStr, idx) => {
-    const isToday    = dateStr === today;
-    const todayBadge = isToday ? '<span class="he-today-badge">Today</span>' : '';
-
-    if (!results[dateStr]) {
-      try {
-        const fs = JSON.parse(localStorage.getItem(cfg.stateKeyPrefix + dateStr) || 'null');
-        if (fs && fs.timeline) {
-          // Flat-timeline format (both Timeline and Rank 'Em use this)
-          if (fs.gameWon || fs.gameLost) {
-            const cc = fs.timeline.filter(e => !e.anchor && e.correct).length;
-            const total = fs.timeline.filter(e => !e.anchor).length;
-            const st = fs.gameLost
-              ? '☆☆☆'
-              : (fs.checksUsed===1?'★★★':fs.checksUsed===2?'★★☆':'★☆☆');
-            results[dateStr] = { stars:st, checksUsed:fs.checksUsed, gameLost:fs.gameLost, correctCount:cc, total };
-          }
-        } else if (cfg.legacySections && fs && (fs.gameWon || fs.gameLost || (fs.sections && fs.sections.every(s => s.complete)))) {
-          // Legacy sections format (Timeline only, predates the flat timeline)
-          const cc = (fs.sections||[]).filter(s => s.complete).length;
-          const st = fs.gameLost
-            ? '☆☆☆'
-            : (fs.checksUsed===1?'★★★':fs.checksUsed===2?'★★☆':'★☆☆');
-          results[dateStr] = { stars:st, checksUsed:fs.checksUsed, gameLost:fs.gameLost, completedCount:cc };
-        }
-      } catch(e) {}
-    }
-    const result = results[dateStr];
-
-    if (result) {
-      const { stars, checksUsed: cu, gameLost: gl } = result;
-      const hasNewFormat = result.total !== undefined;
-      const subLine = hasNewFormat
-        ? (gl ? `Out of attempts · ${result.correctCount}/${result.total} games correct`
-              : `${cu} check${cu!==1?'s':''} used · ${result.correctCount}/${result.total} games`)
-        : (gl ? `Out of attempts · ${result.completedCount}/3 sections correct`
-              : `${cu} check${cu!==1?'s':''} used · ${result.completedCount}/3 sections`);
-
-      let breakdownHtml = '';
-      const state = hGetFullState(dateStr);
-      if (state && state.timeline) {
-        const tl = state.timelineRevealed
-          ? [...state.timeline].sort((a,b) => cfg.sortAsc
-              ? cfg.valueOf(a.game) - cfg.valueOf(b.game)
-              : cfg.valueOf(b.game) - cfg.valueOf(a.game))
-          : state.timeline;
-        breakdownHtml = tl.map(e => {
-          const isA = !!e.anchor;
-          const wasCorrect = isA ? true : (e.userCorrect !== undefined ? e.userCorrect : e.correct);
-          const cls  = isA ? 'anchor' : (wasCorrect ? 'correct' : 'wrong');
-          const icon = isA ? '★' : (wasCorrect ? '✓' : '✗');
-          return `<div class="he-row ${cls}"><div class="he-row-title">${e.game.t}</div><div class="he-row-right"><div class="he-row-year">${cfg.formatValue(cfg.valueOf(e.game))}</div><div class="he-row-icon">${icon}</div></div></div>`;
-        }).join('');
-      } else if (cfg.legacySections && state && state.sections) {
-        const aIds = new Set(state.sections.map(s => s.anchor && s.anchor.id));
-        breakdownHtml = state.sections.map((sec, si) => {
-          const tl = sec.revealed ? [...sec.timeline].sort((a,b)=>a.game.y-b.game.y) : sec.timeline;
-          const rows = tl.map(e => {
-            const isA = aIds.has(e.game.id);
-            const wasCorrect = sec.complete ? true : (e.userCorrect !== undefined ? e.userCorrect : e.correct);
-            const cls  = isA ? 'anchor' : (wasCorrect ? 'correct' : 'wrong');
-            const icon = isA ? '★' : (wasCorrect ? '✓' : '✗');
-            return `<div class="he-row ${cls}"><div class="he-row-title">${e.game.t}</div><div class="he-row-right"><div class="he-row-year">${e.game.y}</div><div class="he-row-icon">${icon}</div></div></div>`;
-          }).join('');
-          return `<div class="he-section"><div class="he-section-label">${HL[si]||'Section '+(si+1)}</div>${rows}</div>`;
-        }).join('');
-      }
-
-      return `<div class="history-entry played">
-        <div class="he-header expandable" data-idx="${idx}">
-          <div class="he-info"><div class="he-date">${hFmtDate(dateStr)}${todayBadge}</div><div class="he-sub">${subLine}</div></div>
-          <div class="he-right"><div class="he-stars">${stars}</div>${breakdownHtml?'<div class="he-chevron">›</div>':''}</div>
-        </div>
-        ${breakdownHtml?`<div class="he-body" id="he-body-${idx}">${breakdownHtml}</div>`:''}
-      </div>`;
-    } else {
-      const state      = hGetFullState(dateStr);
-      const inProgress = state && !state.gameWon && !state.gameLost;
-      const placed     = inProgress
-        ? (state.timeline ? state.timeline.filter(e=>!e.anchor).length
-                           : (cfg.legacySections ? (state.sections||[]).reduce((n,s)=>n+s.timeline.filter(t=>!t.locked).length,0) : 0))
-        : 0;
-      const subLine    = inProgress ? `In progress · ${placed} game${placed!==1?'s':''} placed` : 'Not played yet';
-      const href       = cfg.playHref(dateStr, isToday);
-      const btnLabel   = isToday ? 'Play today' : (inProgress ? 'Continue' : 'Play');
-      return `<div class="history-entry unplayed">
-        <a class="he-header" href="${href}">
-          <div class="he-info"><div class="he-date">${hFmtDate(dateStr)}${todayBadge}</div><div class="he-sub">${subLine}</div></div>
-          <div class="he-right"><span class="he-play-btn">${btnLabel} →</span></div>
-        </a>
-      </div>`;
-    }
-  }).join('');
-
-  root.innerHTML = summaryHtml + `<div class="history-list">${entriesHtml}</div>`;
-
-  root.querySelectorAll('.he-header.expandable').forEach(hdr => {
-    hdr.addEventListener('click', () => {
-      const body = document.getElementById('he-body-' + hdr.dataset.idx);
-      if (!body) return;
-      const open = body.classList.toggle('open');
-      hdr.classList.toggle('open', open);
-    });
-  });
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('.history-tab-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const mode = btn.dataset.tab === 'rank' ? 'rank' : 'daily';
-      const url = new URL(window.location.href);
-      url.searchParams.set('tab', mode);
-      window.history.replaceState(null, '', url);
-      renderHistoryView(mode);
-    });
-  });
-});
-
-// ═══════════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════════
 async function init() {
-  // History view — render inline so localStorage is shared with the game
-  if (new URLSearchParams(window.location.search).get('view') === 'history') {
-    const tabParam = new URLSearchParams(window.location.search).get('tab');
-    renderHistoryView(tabParam === 'rank' ? 'rank' : 'daily');
-    return;
-  }
   const activeDate = getActiveDateStr();
   const isPast = activeDate !== getTodayStr();
   const [ay, am, ad] = activeDate.split('-').map(Number);
   const d = new Date(ay, am - 1, ad);
   document.getElementById('date-pill').textContent =
     d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  document.getElementById('puzzle-pill').textContent = `Puzzle #${getPuzzleNumber()}`;
+  document.getElementById('puzzle-pill').textContent = `Rank #${getPuzzleNumber()}`;
 
-  // Past-puzzle banner
   const banner = document.getElementById('past-puzzle-bar');
   if (banner && isPast) {
     const updateBanner = () => {
-      const t = window.i18n ? window.i18n.t('past.banner') : 'past.banner';
-      banner.innerHTML = t;
+      banner.innerHTML = `You're playing a past puzzle &nbsp;·&nbsp; <a href="rank.html">Today's puzzle →</a>`;
     };
     updateBanner();
     banner.style.display = 'flex';
-    window.addEventListener('langchange', updateBanner);
   }
 
   document.getElementById('how-toggle').addEventListener('click', toggleHow);
   document.querySelectorAll('#check-btn, #check-btn-mobile').forEach(btn => btn.addEventListener('click', checkTimeline));
   document.querySelectorAll('#clear-btn, #clear-btn-mobile').forEach(btn => btn.addEventListener('click', clearAll));
 
-  // Restore today's session if it exists
   if (loadState()) {
     render();
     if (gameWon || gameLost) {
-      saveResult(); // re-save in case it was missed on first completion
+      saveResult();
       const dock = document.getElementById('bottom-dock');
       if (dock) dock.style.display = 'none';
       document.body.style.paddingBottom = '0';
@@ -393,7 +160,7 @@ async function init() {
     `<div style="color:var(--text-muted);font-size:13px;padding:8px;">Loading today's games…</div>`;
 
   try {
-    const res = await fetch(`${WORKER_URL}/games`, {
+    const res = await fetch(`${WORKER_URL}/rank-games`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ seed: getDailySeed() })
@@ -402,14 +169,10 @@ async function init() {
       const errBody = await res.text().catch(() => '');
       throw new Error(`Worker responded ${res.status}: ${errBody.slice(0, 300)}`);
     }
-    const shuffled = await res.json();
-    if (!Array.isArray(shuffled) || shuffled.length < DAILY_COUNT) {
-      // Guard against a short/malformed pool (e.g. IGDB having a bad day)
-      // instead of crashing further down in the anchor-placement logic,
-      // which assumes a full DAILY_COUNT-length array.
-      throw new Error(`Worker returned ${Array.isArray(shuffled) ? shuffled.length : typeof shuffled} games, expected at least ${DAILY_COUNT}`);
+    allGames = await res.json();
+    if (!Array.isArray(allGames) || allGames.length < DAILY_COUNT) {
+      throw new Error(`Worker returned ${Array.isArray(allGames) ? allGames.length : typeof allGames} games, expected ${DAILY_COUNT}`);
     }
-    allGames = shuffled.slice(0, DAILY_COUNT).sort((a, b) => a.y - b.y);
     allGames.forEach(g => { if (g.img) coverCache[g.id] = g.img; });
   } catch (err) {
     console.error('Failed to load games:', err);
@@ -418,8 +181,13 @@ async function init() {
     return;
   }
 
-  // Pick 3 evenly-spaced anchors (middle game of each chunk) and pre-place them,
-  // already locked, directly into a single chronological timeline.
+  // Pick ANCHOR_COUNT evenly-spaced anchors (middle game of each chunk,
+  // by rank order) and pre-place them, already locked, directly into the
+  // ranking — same "evenly-spaced reference points" pattern as the
+  // Timeline game, just chunked by average score (descending) instead of
+  // release year (ascending).
+  allGames = allGames.slice(0, DAILY_COUNT).sort((a, b) => b.avg - a.avg);
+
   timeline = [];
   for (let s = 0; s < ANCHOR_COUNT; s++) {
     // Evenly split allGames into ANCHOR_COUNT chunks (sizes as equal as DAILY_COUNT allows)
@@ -430,13 +198,16 @@ async function init() {
     const anchor = chunk[Math.floor(chunk.length / 2)];
     timeline.push({ game: anchor, anchor: true, locked: true });
   }
-  // allGames is sorted by year, so anchors taken chunk-by-chunk are already in order.
+  // allGames is sorted by avg descending, so anchors taken chunk-by-chunk are already in order.
 
   // All non-anchor games go into the pool — shuffled with seeded RNG
   const anchorIds = new Set(timeline.map(e => e.game.id));
   poolGames = allGames.filter(g => !anchorIds.has(g.id));
 
-  // Seeded Fisher-Yates shuffle
+  // Seeded shuffle so the pool's on-screen order is stable per day but
+  // doesn't hint at the ranking (the worker already shuffles display
+  // order too, but reshuffling client-side keeps behavior identical to
+  // the Timeline game in case that ever changes).
   let rngState = getDailySeed();
   function seededRand() {
     rngState ^= rngState << 13; rngState ^= rngState >> 17; rngState ^= rngState << 5;
@@ -469,19 +240,12 @@ document.addEventListener('DOMContentLoaded', () => {
 // RENDER
 // ═══════════════════════════════════════════════════════
 function render() {
-  if (!timeline.length) return;
+  if (!allGames.length) return;
   renderPool();
   renderTimeline();
   renderStats();
   updateCheckBtn();
   saveState();
-}
-
-function updateCardCovers(gameId) {
-  const poolEl = document.querySelector(`.pool-card[data-id="${gameId}"] .pc-cover`);
-  if (poolEl) injectCover(poolEl, gameId, 'pool');
-  const tlEl = document.querySelector(`.tl-thumb[data-id="${gameId}"]`);
-  if (tlEl) injectCover(tlEl, gameId, 'tl');
 }
 
 function injectCover(el, gameId, type) {
@@ -496,7 +260,7 @@ function renderPool() {
   const placedIds = new Set(timeline.map(t => t.game.id));
 
   poolGames.forEach(g => {
-    if (placedIds.has(g.id)) return; // hide placed games from sidebar
+    if (placedIds.has(g.id)) return;
 
     const div = document.createElement('div');
     div.className = 'pool-card';
@@ -524,7 +288,6 @@ function renderPool() {
     div.addEventListener('dragend', onDragEnd);
     div.addEventListener('touchstart', e => onTouchStart(e, g, 'pool', null), { passive: false });
 
-    // Click opens info popup (only if not a drag)
     div.addEventListener('click', e => {
       if (!div.classList.contains('dragging')) openGamePopup(g);
     });
@@ -569,15 +332,12 @@ function makeItemRow(entry, idx) {
   const isOver = gameWon || gameLost;
   const hasFeedback = entry.correct !== undefined;
 
+  // Rank position badge (#1 = best) — structural, always visible; it's the
+  // slot, not the secret. The secret is which game the player put there.
   const yearCol = document.createElement('div');
   yearCol.className = 'tl-year-col';
-  if (entry.anchor) {
-    yearCol.textContent = entry.game.y;
-    yearCol.style.color = 'var(--amber)';
-  } else if (isOver || entry.locked) {
-    yearCol.textContent = entry.game.y;
-    yearCol.style.color = entry.correct === false ? 'var(--red)' : 'var(--text-muted)';
-  }
+  yearCol.textContent = '#' + (idx + 1);
+  yearCol.style.color = 'var(--amber)';
   row.appendChild(yearCol);
 
   const dot = document.createElement('div');
@@ -611,7 +371,8 @@ function makeItemRow(entry, idx) {
 
   const titleWrap = document.createElement('div');
   titleWrap.style.cssText = 'min-width:0;flex:1;';
-  titleWrap.innerHTML = `<div class="tl-card-title">${entry.game.t}</div>`;
+  titleWrap.innerHTML = `<div class="tl-card-title">${entry.game.t}</div>` +
+    `<div class="tl-card-platform">${entry.game.y}${entry.game.p ? ' · ' + entry.game.p : ''}</div>`;
   left.appendChild(titleWrap);
 
   const right = document.createElement('div');
@@ -620,12 +381,12 @@ function makeItemRow(entry, idx) {
   if (entry.anchor) {
     const yr = document.createElement('div');
     yr.className = 'tl-card-year amber';
-    yr.textContent = entry.game.y + ' ★';
+    yr.textContent = entry.game.avg.toFixed(2) + ' ★';
     right.appendChild(yr);
   } else if (isOver) {
     const yr = document.createElement('div');
     yr.className = 'tl-card-year ' + (entry.correct ? 'green' : 'red');
-    yr.textContent = entry.game.y;
+    yr.textContent = entry.game.avg.toFixed(2);
     right.appendChild(yr);
     const icon = document.createElement('span');
     icon.className = 'tl-status-icon';
@@ -633,10 +394,9 @@ function makeItemRow(entry, idx) {
     icon.style.color = entry.correct ? 'var(--green)' : 'var(--red)';
     right.appendChild(icon);
   } else if (entry.locked) {
-    // Confirmed correct on an earlier check — locked in green, can't be moved again
     const yr = document.createElement('div');
     yr.className = 'tl-card-year green';
-    yr.textContent = entry.game.y;
+    yr.textContent = entry.game.avg.toFixed(2);
     right.appendChild(yr);
     const icon = document.createElement('span');
     icon.className = 'tl-status-icon';
@@ -644,7 +404,6 @@ function makeItemRow(entry, idx) {
     icon.style.color = 'var(--green)';
     right.appendChild(icon);
   } else if (hasFeedback) {
-    // Checked and still wrong — flag it in red without revealing the year (that'd give away the answer)
     const icon = document.createElement('span');
     icon.className = 'tl-status-icon';
     icon.textContent = '✗';
@@ -653,14 +412,14 @@ function makeItemRow(entry, idx) {
     const rmBtn = document.createElement('button');
     rmBtn.className = 'remove-btn';
     rmBtn.textContent = '×';
-    rmBtn.title = 'Remove from timeline';
+    rmBtn.title = 'Remove from ranking';
     rmBtn.addEventListener('click', (e) => { e.stopPropagation(); removeGame(idx); });
     right.appendChild(rmBtn);
   } else {
     const rmBtn = document.createElement('button');
     rmBtn.className = 'remove-btn';
     rmBtn.textContent = '×';
-    rmBtn.title = 'Remove from timeline';
+    rmBtn.title = 'Remove from ranking';
     rmBtn.addEventListener('click', (e) => { e.stopPropagation(); removeGame(idx); });
     right.appendChild(rmBtn);
   }
@@ -691,8 +450,6 @@ function removeGame(idx) {
 
 function clearAll() {
   if (gameWon || gameLost) return;
-  // Keep anchors and any already-confirmed-correct (locked) games — only clear
-  // the games that are still wrong or unchecked.
   timeline = timeline.filter(e => e.locked);
   render();
 }
@@ -706,7 +463,6 @@ function dropAt(insertIdx) {
     if (dragState.timelineIdx < insertIdx) insertIdx--;
   }
 
-  // Defensive: avoid duplicate entries if this game is somehow already placed
   const dupIdx = timeline.findIndex(t => t.game && t.game.id === g.id);
   if (dupIdx !== -1) {
     timeline.splice(dupIdx, 1);
@@ -810,7 +566,6 @@ function onTouchEnd(e) {
   clearEdgeScroll();
   const { el, ghost, lastZone, moved } = touchState;
 
-  // Tap (no drag movement) on a pool card → open info popup
   if (!moved && dragState.source === 'pool') {
     const tappedGame = dragState.game;
     if (ghost) ghost.remove();
@@ -827,7 +582,6 @@ function onTouchEnd(e) {
     const idx = parseInt(lastZone.dataset.insertIdx, 10);
     if (!isNaN(idx)) dropAt(idx);
   } else {
-    // Check if dropped onto the sidebar pool area
     const touch = e.changedTouches[0];
     const target = document.elementFromPoint(touch.clientX, touch.clientY);
     if (target && target.closest('#bottom-dock')) returnGameToPool();
@@ -838,10 +592,10 @@ function onTouchEnd(e) {
 // ═══════════════════════════════════════════════════════
 // AUTO-SCROLL NEAR SCREEN EDGES WHILE DRAGGING
 // ═══════════════════════════════════════════════════════
-const EDGE_ZONE = 70;                // px from top/bottom edge that triggers auto-scroll
-const EDGE_HOLD_MS = 1000;           // dwell time in the zone before scrolling starts
-const EDGE_SCROLL_SPEED = 14;        // px scrolled per animation frame (desktop/mouse)
-const EDGE_SCROLL_SPEED_TOUCH = 56;  // px scrolled per animation frame (touch/mobile) — 4x desktop
+const EDGE_ZONE = 70;
+const EDGE_HOLD_MS = 1000;
+const EDGE_SCROLL_SPEED = 14;
+const EDGE_SCROLL_SPEED_TOUCH = 56;
 
 let edgeDir = null;
 let edgeHoldTimer = null;
@@ -853,7 +607,7 @@ function handleEdgeScroll(clientY) {
   if (clientY < EDGE_ZONE) dir = 'up';
   else if (clientY > vh - EDGE_ZONE) dir = 'down';
 
-  if (dir === edgeDir) return; // unchanged — leave any running timer/loop alone
+  if (dir === edgeDir) return;
   clearEdgeScroll();
   edgeDir = dir;
   if (dir) {
@@ -878,8 +632,6 @@ function clearEdgeScroll() {
   edgeDir = null;
 }
 
-// While auto-scrolling during a touch drag the finger isn't moving, so the
-// hovered drop zone has to be re-checked manually as content scrolls past it.
 function refreshTouchZoneDuringAutoScroll() {
   const { ghost, lastX, lastY, lastZone } = touchState;
   if (!ghost || lastX == null || lastY == null) return;
@@ -894,8 +646,6 @@ function refreshTouchZoneDuringAutoScroll() {
   }
 }
 
-// Desktop native drag-and-drop fires 'dragover' continuously (per spec, even
-// without pointer movement), so edge proximity can be checked the same way.
 document.addEventListener('dragover', e => {
   if (dragState.game) handleEdgeScroll(e.clientY);
 });
@@ -923,8 +673,8 @@ function updateCheckBtn() {
   const allFilled = placed === poolGames.length;
   const checksLeft = MAX_CHECKS - checksUsed;
   const label = checksLeft <= MAX_CHECKS && checksUsed > 0
-    ? `Check timeline (${checksLeft} left)`
-    : 'Check timeline';
+    ? `Check ranking (${checksLeft} left)`
+    : 'Check ranking';
   btns.forEach(btn => {
     btn.disabled = !allFilled || gameWon || gameLost;
     if (!gameWon && !gameLost) {
@@ -944,12 +694,15 @@ function checkTimeline() {
   let totalWrong = 0;
 
   timeline.forEach((entry, i) => {
-    if (entry.locked) return; // anchors & already-confirmed-correct games skip rechecking
-    const prevYear = i > 0 ? timeline[i - 1].game.y : -Infinity;
-    const nextYear = i < timeline.length - 1 ? timeline[i + 1].game.y : Infinity;
-    entry.correct = entry.game.y >= prevYear && entry.game.y <= nextYear;
+    if (entry.locked) return;
+    // Descending order: item above must have a >= average, item below a <=
+    // average. Boundary slots (top/bottom of the list) always satisfy their
+    // missing side, same "neighbor consistency" trick the Timeline game uses.
+    const prevAvg = i > 0 ? timeline[i - 1].game.avg : Infinity;
+    const nextAvg = i < timeline.length - 1 ? timeline[i + 1].game.avg : -Infinity;
+    entry.correct = entry.game.avg <= prevAvg && entry.game.avg >= nextAvg;
     if (entry.correct) {
-      entry.locked = true; // lock correct games in place — only wrong ones stay movable
+      entry.locked = true;
       newlyLocked++;
     } else {
       totalWrong++;
@@ -971,12 +724,8 @@ function checkTimeline() {
     setMsg('', '');
   } else if (outOfAttempts) {
     gameLost = true;
-    // Save the user's last-check result per game, then sort the whole timeline to reveal the correct order.
-    // Note: once sorted by year, every entry trivially satisfies prevYear<=y<=nextYear, so recomputing
-    // `correct` from neighbor order here would wrongly mark every game as correct — use the saved
-    // userCorrect (the actual guess result) instead so wrong placements still show as wrong.
     timeline.forEach(entry => { entry.userCorrect = entry.locked ? true : entry.correct; });
-    timeline.sort((a, b) => a.game.y - b.game.y);
+    timeline.sort((a, b) => b.game.avg - a.game.avg); // reveal true order: highest avg first
     timeline.forEach(entry => { entry.correct = entry.userCorrect; });
     timelineRevealed = true;
     saveState();
@@ -985,13 +734,13 @@ function checkTimeline() {
     const dock = document.getElementById('bottom-dock');
     if (dock) dock.style.display = 'none';
     document.body.style.paddingBottom = '0';
-    setMsg(`<strong>No attempts left!</strong> Here's the correct order.`, 'error');
+    setMsg(`<strong>No attempts left!</strong> Here's the correct ranking.`, 'error');
     setTimeout(showEndScreen, 800);
   } else {
     render();
     const checksLeft = MAX_CHECKS - checksUsed;
     if (newlyLocked > 0 && totalWrong === 0) {
-      setMsg(`<strong>All placed games are correct!</strong> Place the rest — ${checksLeft} attempt${checksLeft !== 1 ? 's' : ''} left.`, 'success');
+      setMsg(`<strong>All ranked games are correct!</strong> Rank the rest — ${checksLeft} attempt${checksLeft !== 1 ? 's' : ''} left.`, 'success');
     } else if (newlyLocked > 0) {
       setMsg(`<strong>${newlyLocked} game${newlyLocked > 1 ? 's' : ''} locked in!</strong> Still ${totalWrong} wrong. ${checksLeft} attempt${checksLeft !== 1 ? 's' : ''} left.`, 'warning');
     } else {
@@ -1015,26 +764,25 @@ function showEndScreen() {
   let stars, msg;
 
   if (gameLost) {
-    // Stars reflect attempts used, not partial correctness — a loss is always 0 stars.
     stars = '☆☆☆';
     msg = correctCount === 0
       ? 'Better luck next time!'
-      : `${correctCount}/${total} games placed correctly`;
+      : `${correctCount}/${total} games ranked correctly`;
   } else {
     stars = checksUsed === 1 ? '★★★' : checksUsed === 2 ? '★★☆' : '★☆☆';
     msg = checksUsed === 1 ? 'Perfect! First try!' : checksUsed === 2 ? 'Excellent!' : 'Well done!';
   }
 
   const displayTimeline = timelineRevealed
-    ? [...timeline].sort((a, b) => a.game.y - b.game.y)
+    ? [...timeline].sort((a, b) => b.game.avg - a.game.avg)
     : timeline;
-  const breakdown = displayTimeline.map(e => {
+  const breakdown = displayTimeline.map((e, i) => {
     const statusColor = e.anchor ? 'var(--amber)' : (e.correct ? 'var(--green)' : 'var(--red)');
     const statusIcon = e.anchor ? '★' : (e.correct ? '✓' : '✗');
     return `<div class="end-row">
-      <div class="er-title">${e.game.t}</div>
+      <div class="er-title">#${i + 1} ${e.game.t}</div>
       <div style="display:flex;align-items:center;gap:8px">
-        <div class="er-year" style="color:var(--text-dim)">${e.game.y}</div>
+        <div class="er-year" style="color:var(--text-dim)" title="Metascore ${e.game.m} · User ${e.game.u}">${e.game.avg.toFixed(2)}</div>
         <div class="er-status"><span style="color:${statusColor}">${statusIcon}</span></div>
       </div>
     </div>`;
@@ -1061,14 +809,13 @@ function copyShare() {
   const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   const correctCount = timeline.filter(e => !e.anchor && e.correct).length;
   const total = poolGames.length;
-  // Stars reflect attempts used, not partial correctness — a loss is always 0 stars.
   const stars = gameLost
     ? '☆☆☆'
     : (checksUsed === 1 ? '★★★' : checksUsed === 2 ? '★★☆' : '★☆☆');
   const result = gameLost
     ? `Out of attempts — ${correctCount}/${total} games correct`
     : `${checksUsed} check${checksUsed !== 1 ? 's' : ''} used`;
-  const text = `Gameology — ${dateStr}\n${stars}\n${result}\n\nCan you beat my score?`;
+  const text = `Gameology Rank 'Em — ${dateStr}\n${stars}\n${result}\n\nCan you beat my score?`;
   navigator.clipboard.writeText(text).then(() => {
     const el = document.getElementById('copy-confirm');
     if (el) { el.textContent = 'Copied to clipboard!'; setTimeout(() => { el.textContent = ''; }, 2500); }
@@ -1103,7 +850,7 @@ function openGamePopup(game) {
   const platformEl = document.getElementById('game-popup-platform');
 
   titleEl.textContent = game.t;
-  if (platformEl) platformEl.textContent = game.p || '';
+  if (platformEl) platformEl.textContent = [game.y, game.p].filter(Boolean).join(' · ');
 
   const url = coverCache[game.id];
   if (url && url !== 'loading' && url !== 'none') {
@@ -1168,7 +915,6 @@ function initDockArrows() {
   });
   scroll.addEventListener('scroll', updateArrows, { passive: true });
 
-  // Re-check arrows after pool renders or window resizes
   const observer = new MutationObserver(updateArrows);
   observer.observe(document.getElementById('pool-grid'), { childList: true });
   window.addEventListener('resize', updateArrows);

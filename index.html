@@ -321,9 +321,13 @@
     <div id="history-view" style="display:none">
       <div class="history-inner">
         <div class="history-hero">
-          <div class="history-hero-title">Puzzle <span>Archive</span></div>
-          <p class="history-hero-sub">Every daily puzzle since launch. Play any one you missed, or review your past
-            scores.</p>
+          <div class="history-hero-title" data-i18n-html="history.hero.title">Previous <span>Challenges</span></div>
+          <p class="history-hero-sub" data-i18n="history.hero.sub">Every daily puzzle since launch. Play any one you
+            missed, or review your past scores.</p>
+        </div>
+        <div class="history-tabs">
+          <button class="history-tab-btn" data-tab="daily" data-i18n="nav.daily">Daily Challenge</button>
+          <button class="history-tab-btn" data-tab="rank" data-i18n="nav.rank">Rank 'Em</button>
         </div>
         <div id="history-root"></div>
       </div>

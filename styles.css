@@ -1852,3 +1852,231 @@ body::after {
       rgba(0, 0, 0, 0.03) 2px,
       rgba(0, 0, 0, 0.03) 4px);
 }
+
+/* ── PREVIOUS CHALLENGES (HISTORY) VIEW ──
+   Ported from the old standalone history.html (which used to be the real
+   page before it was folded into index.html?view=history, but the CSS
+   never made the move — history-view was rendering fully unstyled until
+   this was noticed while adding the Rank 'Em tab). */
+.history-inner {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 0 1.5rem 4rem;
+}
+
+.history-hero {
+  padding: 3rem 0 2.5rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 2.5rem;
+}
+
+.history-hero-title {
+  font-family: var(--mono);
+  font-size: clamp(36px, 6.5vw, 55px);
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -1px;
+  line-height: 1.1;
+  margin-bottom: 0.75rem;
+}
+
+.history-hero-title span { color: var(--accent-light); }
+
+.history-hero-sub {
+  color: var(--text-dim);
+  font-size: 18px;
+  line-height: 1.6;
+}
+
+/* Tab switcher (Daily Challenge / Rank 'Em) — same pattern as .lang-toggle */
+.history-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.history-tab-btn {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  padding: 8px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
+}
+
+.history-tab-btn:hover {
+  color: var(--text);
+  background: var(--surface2);
+}
+
+.history-tab-btn.active {
+  color: var(--accent-light);
+  background: var(--accent-bg);
+  border-color: var(--accent);
+}
+
+/* Summary bar */
+.history-summary {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.hs-card {
+  background: var(--surface);
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius);
+  padding: 0.75rem 1.25rem;
+  text-align: center;
+  min-width: 80px;
+  flex: 1;
+}
+
+.hs-val {
+  font-family: var(--mono);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.hs-lbl {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-top: 2px;
+  font-family: var(--mono);
+}
+
+/* Entry list */
+.history-list { display: flex; flex-direction: column; gap: 10px; }
+
+.history-entry {
+  background: var(--surface);
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+
+.history-entry.unplayed { opacity: 0.75; }
+.history-entry.unplayed:hover { opacity: 1; border-color: var(--accent); }
+.history-entry.played:hover { border-color: var(--accent); }
+
+.he-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0.85rem 1.25rem;
+  text-decoration: none;
+  color: inherit;
+}
+
+.he-header.expandable { cursor: pointer; user-select: none; }
+
+.he-emoji { font-size: 22px; flex-shrink: 0; line-height: 1; }
+
+.he-info { flex: 1; min-width: 0; }
+
+.he-date {
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.he-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.he-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+
+.he-stars { font-size: 18px; letter-spacing: 2px; }
+
+.he-play-btn {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--accent-light);
+  background: var(--accent-bg);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  padding: 4px 10px;
+  text-decoration: none;
+  transition: background 0.15s, color 0.15s;
+}
+
+.he-play-btn:hover { background: var(--accent); color: #fff; }
+
+.he-chevron { font-size: 14px; color: var(--text-muted); transition: transform 0.2s; }
+.he-header.open .he-chevron { transform: rotate(90deg); }
+
+.he-today-badge {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 4px;
+  padding: 2px 6px;
+  vertical-align: middle;
+  margin-left: 6px;
+}
+
+/* Breakdown */
+.he-body { display: none; border-top: 1px solid var(--border); padding: 1rem 1.25rem; }
+.he-body.open { display: block; }
+
+.he-section { margin-bottom: 1rem; }
+.he-section:last-child { margin-bottom: 0; }
+.he-section-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.he-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--border);
+  gap: 8px;
+}
+
+.he-row:last-child { border-bottom: none; }
+
+.he-row-title {
+  font-size: 13px;
+  color: var(--text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+}
+
+.he-row-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.he-row-year { font-family: var(--mono); font-size: 13px; color: var(--text-muted); }
+.he-row-icon { font-size: 13px; }
+.he-row.anchor .he-row-title { color: var(--text); font-weight: 600; }
+.he-row.anchor .he-row-year { color: var(--amber); }
+.he-row.correct .he-row-icon { color: var(--green); }
+.he-row.wrong .he-row-icon { color: var(--red); }

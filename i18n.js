@@ -3,7 +3,8 @@
     en: {
       'logo.sub':       'Video Game Timeline',
       'nav.daily':      'Daily Challenge',
-      'nav.history':    'History',
+      'nav.rank':       'Rank \'Em',
+      'nav.history':    'Previous Challenges',
       'nav.blog':       'Blog',
       'nav.about':      'About',
       'footer.credit':  'Game information provided by',
@@ -26,6 +27,22 @@
       'how.bar':        'How to play',
       'dock.label':     'Game pool, drag onto the timeline',
       'past.banner':    'You\'re playing a past puzzle &nbsp;·&nbsp; <a href="index.html">Today\'s puzzle →</a>',
+
+      // Previous Challenges (history) view
+      'history.hero.title': 'Previous <span>Challenges</span>',
+      'history.hero.sub':   'Every daily puzzle since launch. Play any one you missed, or review your past scores.',
+
+      // Rank 'Em stats & UI
+      'stat.ranked':    'Games ranked',
+      'rank.hint':      'Ranking. Best average score at top, worst at bottom',
+      'btn.checkRank':  'Check ranking',
+      'dock.rankLabel': 'Game pool, drag onto the ranking',
+      'how.rank.title': 'HOW TO PLAY',
+      'how.rank.1': 'The ranking has <strong>2 anchor games</strong> pre-placed as reference points. Highest average score at the top, lowest at the bottom.',
+      'how.rank.2': 'The score is the <strong>average of each game\'s Metacritic Metascore (critics) and User Score</strong>, critics and players don\'t always agree!',
+      'how.rank.3': '<strong>Drag games</strong> from the pool into the right spot in the ranking. On mobile, press and hold to drag.',
+      'how.rank.4': 'Rank every game, then hit <strong>Check ranking</strong>. Correct spots <strong>lock in and turn green</strong>, wrong ones turn <strong>red</strong>, move them and check again.',
+      'how.rank.5': 'You get <strong>3 checks</strong> total to get every remaining game in its correct spot.',
 
       // Blog
       'blog.hero.title': "Max's <span>Blog</span>",
@@ -54,7 +71,8 @@
     es: {
       'logo.sub':       'Línea de Tiempo de Videojuegos',
       'nav.daily':      'Reto Diario',
-      'nav.history':    'Historial',
+      'nav.rank':       'Ranking',
+      'nav.history':    'Retos Anteriores',
       'nav.blog':       'Blog',
       'nav.about':      'Acerca de',
       'footer.credit':  'Información de juegos proporcionada por',
@@ -77,6 +95,22 @@
       'how.bar':        'Cómo jugar',
       'dock.label':     'Juegos disponibles, arrastra a la línea de tiempo',
       'past.banner':    'Estás jugando un puzzle pasado &nbsp;·&nbsp; <a href="index.html">Puzzle de hoy →</a>',
+
+      // Vista de Retos Anteriores (historial)
+      'history.hero.title': 'Retos <span>Anteriores</span>',
+      'history.hero.sub':   'Todos los puzzles diarios desde el lanzamiento. Juega el que te falte o revisa tus puntajes anteriores.',
+
+      // Ranking (Rank 'Em) stats & UI
+      'stat.ranked':    'Juegos clasificados',
+      'rank.hint':      'Ranking. Mejor puntaje promedio arriba, el peor abajo',
+      'btn.checkRank':  'Verificar ranking',
+      'dock.rankLabel': 'Juegos disponibles, arrastra al ranking',
+      'how.rank.title': 'CÓMO JUGAR',
+      'how.rank.1': 'El ranking tiene <strong>2 juegos ancla</strong> precolocados como puntos de referencia. El mejor puntaje promedio arriba, el más bajo abajo.',
+      'how.rank.2': 'El puntaje es el <strong>promedio del Metascore de Metacritic (críticos) y el User Score</strong>, ¡la crítica y los jugadores no siempre coinciden!',
+      'how.rank.3': '<strong>Arrastra juegos</strong> de la lista al lugar correcto en el ranking. En móvil, mantén presionado para arrastrar.',
+      'how.rank.4': 'Clasifica todos los juegos y luego pulsa <strong>Verificar ranking</strong>. Los correctos se <strong>bloquean y se vuelven verdes</strong>, los incorrectos se ponen en <strong>rojo</strong>, muévelos y vuelve a verificar.',
+      'how.rank.5': 'Tienes <strong>3 verificaciones</strong> en total para colocar cada juego restante en su lugar correcto.',
 
       // Blog
       'blog.hero.title': 'Blog <span>de Max</span>',

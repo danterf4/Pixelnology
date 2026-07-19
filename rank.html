@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gameology - Rank 'Em Daily Challenge</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  <script src="i18n.js"></script>
+</head>
+
+<body class="has-sidebar">
+  <div class="page">
+
+    <!-- HEADER -->
+    <div id="site-header"></div>
+    <script src="header.js"></script>
+
+    <!-- HOW TO PLAY MODAL -->
+    <div class="how-overlay" id="how-overlay">
+      <div class="how-modal">
+        <div class="how-modal-header">
+          <span class="how-modal-title" data-i18n="how.rank.title">HOW TO PLAY</span>
+          <button class="how-close" id="how-close">✕</button>
+        </div>
+        <ol>
+          <li data-i18n-html="how.rank.1">The ranking has <strong>2 anchor games</strong> pre-placed as reference
+            points. Highest average score at the top, lowest at the bottom.</li>
+          <li data-i18n-html="how.rank.2">The score is the <strong>average of each game's Metacritic Metascore
+              (critics) and User Score</strong> — critics and players don't always agree!</li>
+          <li data-i18n-html="how.rank.3"><strong>Drag games</strong> from the pool into the right spot in the
+            ranking. On mobile, press and hold to drag.</li>
+          <li data-i18n-html="how.rank.4">Rank every game, then hit <strong>Check ranking</strong>. Correct spots
+            <strong>lock in and turn green</strong>, wrong ones turn <strong>red</strong> — move them and check
+            again.
+          </li>
+          <li data-i18n-html="how.rank.5">You get <strong>3 checks</strong> total to get every remaining game in its
+            correct spot.</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- GAME VIEW -->
+    <div id="game-view">
+
+      <!-- PAST PUZZLE BANNER -->
+      <div id="past-puzzle-bar"
+        style="display:none;align-items:center;justify-content:center;gap:8px;background:var(--accent-bg);border:1px solid var(--accent);border-radius:var(--radius);padding:8px 14px;margin-bottom:12px;font-size:13px;color:var(--accent-light);">
+      </div>
+
+      <!-- STATS -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-val" id="stat-checks">3</div>
+          <div class="stat-lbl" data-i18n="stat.attempts">Attempts left</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" id="stat-placed">0</div>
+          <div class="stat-lbl" data-i18n="stat.ranked">Games ranked</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" id="stat-remaining">—</div>
+          <div class="stat-lbl" data-i18n="stat.remaining">Games left</div>
+        </div>
+      </div>
+
+      <!-- MESSAGE -->
+      <div class="msg-box" id="msg-box"></div>
+
+      <!-- PROGRESS BAR -->
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" id="progress-fill" style="width:0%"></div>
+      </div>
+
+      <!-- RANKING + ACTIONS LAYOUT -->
+      <div class="timeline-layout">
+
+        <!-- 80%: Ranking -->
+        <div class="timeline-area">
+          <div class="section-label" style="margin-bottom:14px;" data-i18n="rank.hint">Ranking — best average score
+            at top, worst at bottom</div>
+          <div class="timeline-track">
+            <div class="tl-spine" id="tl-spine"></div>
+            <div class="tl-items" id="tl-items"></div>
+          </div>
+        </div>
+
+        <!-- 20%: Action buttons -->
+        <div class="timeline-actions-panel">
+          <button class="btn btn-primary" id="check-btn" disabled data-i18n="btn.checkRank">Check ranking</button>
+          <button class="btn btn-ghost btn-sm" id="clear-btn" data-i18n="btn.clear">Clear all</button>
+        </div>
+
+      </div>
+
+      <!-- END SCREEN -->
+      <div id="end-screen"></div>
+
+    </div><!-- #game-view -->
+
+    <div id="site-footer"></div>
+    <script src="footer.js"></script>
+
+  </div>
+
+  <!-- GAME INFO POPUP -->
+  <div class="game-popup-overlay" id="game-popup-overlay">
+    <div class="game-popup">
+      <button class="game-popup-close" id="game-popup-close">✕</button>
+      <div class="game-popup-cover" id="game-popup-cover"></div>
+      <div class="game-popup-title" id="game-popup-title"></div>
+      <div class="game-popup-platform" id="game-popup-platform"></div>
+    </div>
+  </div>
+
+  <!-- FIXED BOTTOM DOCK (left sidebar on desktop) -->
+  <div class="bottom-dock" id="bottom-dock">
+    <div class="dock-inner">
+      <div class="dock-meta-row">
+        <div class="pill accent" id="date-pill"></div>
+        <div class="pill" id="puzzle-pill"></div>
+
+      </div>
+      <div class="dock-header">
+        <span class="dock-label" data-i18n="dock.rankLabel">Game pool — <br>drag onto the ranking</span>
+      </div>
+      <p class="dock-count" id="dock-count">— remaining</p>
+      <div class="dock-scroll-wrap">
+        <button class="dock-arrow hidden" id="dock-arrow-left" aria-label="Scroll left"><span
+            class="material-symbols-outlined">
+            keyboard_arrow_up
+          </span></button>
+        <div class="dock-scroll" id="dock-scroll">
+          <div class="pool-grid" id="pool-grid" style="display:flex;gap:8px;flex-wrap:nowrap;"></div>
+        </div>
+        <button class="dock-arrow" id="dock-arrow-right" aria-label="Scroll right">
+          <span class="material-symbols-outlined">
+            keyboard_arrow_down
+          </span>
+        </button>
+      </div>
+      <div class="how-bar" id="how-toggle">
+        <p id="howto" data-i18n="how.bar">How to play</p>
+      </div>
+      <div class="timeline-actions-panel mobile">
+        <button class="btn btn-ghost btn-sm" id="clear-btn-mobile" data-i18n="btn.clear">Clear all</button>
+        <button class="btn btn-primary" id="check-btn-mobile" disabled data-i18n="btn.checkRank">Check ranking</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="rank.js"></script>
+</body>
+
+</html>

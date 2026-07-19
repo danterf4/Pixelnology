@@ -5,15 +5,22 @@
   var t = function (key) { return window.i18n ? window.i18n.t(key) : key; };
   var lang = window.i18n ? window.i18n.lang : 'en';
 
+  // From rank.html, jump straight to the Rank 'Em tab of Previous Challenges
+  // instead of always defaulting to the Daily Challenge tab.
+  var historyHref = file === 'rank.html' ? 'index.html?view=history&tab=rank' : 'index.html?view=history';
+
   var NAV = [
-    { href: 'index.html',              key: 'nav.daily'   },
-    { href: 'index.html?view=history', key: 'nav.history' },
-    { href: 'blog.html',               key: 'nav.blog'    },
-    { href: 'about.html',              key: 'nav.about'   }
+    { href: 'index.html', key: 'nav.daily'   },
+    { href: 'rank.html',  key: 'nav.rank'    },
+    { href: historyHref,  key: 'nav.history' },
+    { href: 'blog.html',  key: 'nav.blog'    },
+    { href: 'about.html', key: 'nav.about'   }
   ];
 
   var navHtml = NAV.map(function (p) {
-    var active = current === p.href ? ' active' : '';
+    // The history link's href varies by page (see historyHref above), so
+    // match its active state on the view rather than the exact href string.
+    var active = (p.key === 'nav.history' ? isHistoryView : current === p.href) ? ' active' : '';
     return '<a href="' + p.href + '" class="site-nav-link' + active + '" data-i18n="' + p.key + '">' + t(p.key) + '</a>';
   }).join('');
 
